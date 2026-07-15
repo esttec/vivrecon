@@ -42,6 +42,7 @@ export default {
   'premium.subscribeMonthly': 'Subscribe monthly',
   'premium.agreeTerms': 'By subscribing you agree to our',
   'premium.termsLink': 'Terms & Conditions',
+  'premium.disclaimer': 'I understand vivrecon is provided for educational and study purposes only, is not financial advice, and I accept the',
   'terms.title': 'Terms & Conditions',
   'common.back': 'Back',
   'premium.aiChat': 'AI financial assistant',

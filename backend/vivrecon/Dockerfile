@@ -1,7 +1,7 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN ./gradlew bootJar --no-daemon -x test
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew && ./gradlew bootJar --no-daemon -x test
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app

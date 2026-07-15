@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import PageShell from '../components/PageShell'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -27,6 +28,7 @@ export default function PremiumPage() {
   const [activating, setActivating] = useState(false)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
+  const [agreed, setAgreed] = useState(false)
 
   // Handle the redirect back from Stripe Checkout.
   useEffect(() => {
@@ -83,11 +85,23 @@ export default function PremiumPage() {
         {paid ? (
           <button style={{ ...s.cta, opacity: 0.6 }} disabled>{tr('premium.activeStatus')}</button>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button style={s.cta} onClick={() => startCheckout('yearly')} disabled={activating}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label style={s.agreeRow}>
+              <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, flexShrink: 0 }} />
+              <span>{tr('premium.disclaimer')} <Link to="/terms" style={s.termsLink}>{tr('premium.termsLink')}</Link></span>
+            </label>
+            <button
+              style={{ ...s.cta, ...((activating || !agreed) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+              onClick={() => startCheckout('yearly')}
+              disabled={activating || !agreed}
+            >
               {activating ? '…' : tr('premium.subscribeYearly')}
             </button>
-            <button style={s.ctaAlt} onClick={() => startCheckout('monthly')} disabled={activating}>
+            <button
+              style={{ ...s.ctaAlt, ...((activating || !agreed) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+              onClick={() => startCheckout('monthly')}
+              disabled={activating || !agreed}
+            >
               {activating ? '…' : tr('premium.subscribeMonthly')}
             </button>
           </div>
@@ -121,4 +135,5 @@ const s = {
   ctaAlt:   { width: '100%', padding: '13px 20px', background: '#fff', color: t.navy, border: `2px solid ${t.navyMid}`, borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' },
   note:     { textAlign: 'center', fontSize: 12, color: t.navyLight, marginTop: 10 },
   termsLink:{ color: t.navyMid, fontWeight: 700, textDecoration: 'underline' },
+  agreeRow: { display: 'flex', gap: 9, alignItems: 'flex-start', textAlign: 'left', fontSize: 13, color: t.navyLight, lineHeight: 1.5, background: '#f5f8ff', border: `1px solid ${t.border}`, borderRadius: 10, padding: '12px 14px' },
 }

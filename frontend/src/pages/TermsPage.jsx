@@ -24,6 +24,15 @@ export default function TermsPage() {
           agree, please do not use the Service.
         </p>
 
+        <div style={s.disclaimer}>
+          <strong>Educational / study project.</strong> vivrecon is provided for
+          <strong> educational and study purposes only</strong>. It is a learning/student
+          project, not a licensed financial service or product. All budgets, calculations,
+          suggestions and imported data are for practice and general information only, are
+          <strong> not financial, investment, tax or legal advice</strong>, and may be
+          inaccurate or incomplete. You use it entirely at your own discretion and risk.
+        </div>
+
         <h2 style={s.h2}>1. The Service</h2>
         <p style={s.p}>
           vivrecon is a personal budgeting tool that helps you plan income and expenses, track
@@ -125,5 +134,6 @@ const s = {
   updated: { fontSize: 12, color: t.navyLight, margin: '0 0 20px' },
   h2:      { fontSize: 16, fontWeight: 700, color: t.navy, margin: '22px 0 6px' },
   p:       { fontSize: 14, color: '#39434f', lineHeight: 1.6, margin: 0 },
+  disclaimer: { fontSize: 14, color: '#7a5b00', lineHeight: 1.6, background: '#fff8e6', border: '1px solid #f0d488', borderRadius: 10, padding: '14px 16px', margin: '18px 0' },
   note:    { fontSize: 12, color: t.navyLight, fontStyle: 'italic', marginTop: 24, paddingTop: 14, borderTop: `1px solid ${t.borderLight}`, lineHeight: 1.5 },
 }

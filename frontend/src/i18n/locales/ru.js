@@ -40,6 +40,7 @@ export default {
   'premium.subscribeMonthly': 'Оформить на месяц',
   'premium.agreeTerms': 'Оформляя подписку, вы принимаете наши',
   'premium.termsLink': 'Условия использования',
+  'premium.disclaimer': 'Я понимаю, что vivrecon предоставляется только для учебных и образовательных целей, не является финансовой консультацией, и принимаю',
   'terms.title': 'Условия использования',
   'common.back': 'Назад',
   'premium.aiChat': 'ИИ-финансовый помощник',
