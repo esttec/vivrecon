@@ -1,0 +1,15 @@
+# Caddy automatically gets and renews a free HTTPS certificate for this domain.
+# Requires: ports 80 and 443 open, and vivrecon.com DNS pointing to this server.
+vivrecon.com, www.vivrecon.com {
+    encode gzip
+
+    # API requests go to the Spring Boot backend.
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Everything else is the React app.
+    handle {
+        reverse_proxy web:80
+    }
+}

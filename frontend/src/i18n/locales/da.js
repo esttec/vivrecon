@@ -1,0 +1,6 @@
+// Danish / Dansk
+export default {
+  'nav.budget': 'Budget', 'nav.house': 'Bolig', 'nav.eating': 'Mad', 'nav.clothing': 'Tøj', 'nav.travel': 'Rejser', 'nav.profile': 'Profil',
+  'common.signOut': 'Log ud', 'common.language': 'Sprog', 'common.cancel': 'Annuller', 'common.save': 'Gem',
+  'profile.title': 'Profil', 'profile.subtitle': 'Personlige oplysninger og månedlig budgetplanlægning', 'profile.location': 'Placering', 'profile.yourLocation': 'Din placering', 'profile.detecting': 'Registrerer…', 'profile.unavailable': 'Ikke tilgængelig', 'profile.personalInfo': 'Personlige oplysninger', 'profile.editProfile': 'Rediger profil', 'profile.displayName': 'Vist navn', 'profile.email': 'E-mail', 'profile.currency': 'Valuta', 'profile.monthlyIncome': 'Månedlig indkomst', 'profile.budgetPlan': 'Månedlig budgetplan', 'profile.updatePlan': 'Opdater plan', 'profile.planned': 'Planlagt', 'profile.unallocated': 'Ikke tildelt', 'profile.overPlanned': 'Overplanlagt', 'profile.noCategories': 'Der er endnu ikke angivet budgetkategorier.', 'profile.setupTitle': 'Opret din budgetplan', 'profile.setupDesc': 'Tilføj din indkomst, og vælg hvilke udgifter du vil følge: husleje, mad, transport, opsparing, gæld…', 'profile.setupNow': 'Opret nu', 'profile.couldNotLoad': 'Profilen kunne ikke indlæses', 'profile.backToLogin': 'Tilbage til login', 'profile.loading': 'Indlæser…',
+}

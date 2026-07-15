@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dto": "^0.0.1",
+    "security": "^1.0.0"
+  }
+}

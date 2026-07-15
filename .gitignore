@@ -1,0 +1,18 @@
+# Dependencies & build output
+node_modules/
+dist/
+build/
+.gradle/
+*.class
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Archives & misc
+*.zip

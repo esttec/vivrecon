@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: vivrecon
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/vivrecon}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:vivrecon}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: always
+
+vivrecon:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-32-chars!!}
+    access-token-expiry-ms: 900000        # 15 minutes
+    refresh-token-expiry-days: 30
+
+  oauth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+    apple:
+      client-id: ${APPLE_CLIENT_ID:}
+    facebook:
+      app-id: ${FACEBOOK_APP_ID:}
+      app-secret: ${FACEBOOK_APP_SECRET:}
+
+  # Stripe billing — set these from your Stripe dashboard (server-side only).
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    price-monthly: ${STRIPE_PRICE_MONTHLY:}
+    price-yearly: ${STRIPE_PRICE_YEARLY:}
+
+
+  app:
+    # Where Stripe redirects back after checkout (your frontend URL).
+    base-url: ${APP_BASE_URL:http://localhost:5173}
+
+logging:
+  level:
+    com.vivrecon: DEBUG
+    org.springframework.security: INFO
+
+---
+# ── Dev profile: H2 in-memory, no Postgres needed ────────────────────────────
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:mem:vivrecon;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  flyway:
+    enabled: false

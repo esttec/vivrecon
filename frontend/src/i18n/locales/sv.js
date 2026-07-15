@@ -1,0 +1,6 @@
+// Swedish / Svenska
+export default {
+  'nav.budget': 'Budget', 'nav.house': 'Boende', 'nav.eating': 'Mat', 'nav.clothing': 'Kläder', 'nav.travel': 'Resor', 'nav.profile': 'Profil',
+  'common.signOut': 'Logga ut', 'common.language': 'Språk', 'common.cancel': 'Avbryt', 'common.save': 'Spara',
+  'profile.title': 'Profil', 'profile.subtitle': 'Personlig information och månadsbudgetplanering', 'profile.location': 'Plats', 'profile.yourLocation': 'Din plats', 'profile.detecting': 'Identifierar…', 'profile.unavailable': 'Otillgänglig', 'profile.personalInfo': 'Personlig information', 'profile.editProfile': 'Redigera profil', 'profile.displayName': 'Visningsnamn', 'profile.email': 'E-post', 'profile.currency': 'Valuta', 'profile.monthlyIncome': 'Månadsinkomst', 'profile.budgetPlan': 'Månatlig budgetplan', 'profile.updatePlan': 'Uppdatera plan', 'profile.planned': 'Planerat', 'profile.unallocated': 'Ofördelat', 'profile.overPlanned': 'Överplanerat', 'profile.noCategories': 'Inga budgetkategorier har angetts ännu.', 'profile.setupTitle': 'Skapa din budgetplan', 'profile.setupDesc': 'Lägg till din inkomst och välj vilka kostnader du vill följa: hyra, mat, transport, sparande, skulder…', 'profile.setupNow': 'Skapa nu', 'profile.couldNotLoad': 'Det gick inte att ladda profilen', 'profile.backToLogin': 'Tillbaka till inloggning', 'profile.loading': 'Laddar…',
+}

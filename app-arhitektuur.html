@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<title>Coffee In — arhitektuur</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f7f8fa;
+    margin: 0;
+    padding: 8px;
+    color: #1f2937;
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  .canvas {
+    max-width: 1820px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  /* ===== HEADER ===== */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  h1 {
+    font-size: 16px; font-weight: 800; margin: 0;
+    letter-spacing: 0.3px; color: #111827;
+  }
+  .subtitle { color: #6b7280; font-size: 9px; }
+
+  /* ===== TOP ROW ===== */
+  .top-row {
+    display: grid;
+    grid-template-columns: 165px 1fr 165px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .benefits-box {
+    border: 1.2px solid #86efac;
+    background: #f0fdf4;
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: #14532d;
+  }
+  .benefits-box h4 {
+    margin: 0 0 4px 0; color: #166534; font-size: 9px;
+    letter-spacing: 0.5px; font-weight: 800;
+  }
+  .benefits-box ul { margin: 0; padding-left: 0; list-style: none; line-height: 1.45; font-size: 8.5px; }
+  .benefits-box li::before { content: "✓ "; color: #16a34a; font-weight: 700; }
+
+  /* User flow */
+  .userflow {
+    border: 1.2px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 6px 4px 6px;
+    background: #fafbfc;
+  }
+  .userflow-title {
+    font-size: 9px; font-weight: 700; color: #4b5563;
+    letter-spacing: 0.5px; margin-bottom: 4px; text-align: center;
+  }
+  .flow-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 2px;
+  }
+  .flow-step { flex: 1; text-align: center; font-size: 8px; color: #374151; line-height: 1.2; }
+  .flow-icon {
+    width: 26px; height: 26px; margin: 0 auto 2px auto;
+    border: 1px solid #9ca3af; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; font-size: 13px;
+  }
+  .flow-arrow { color: #9ca3af; font-size: 11px; padding: 8px 0 0 0; }
+
+  .ext-title-slot {
+    border: 1.2px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px;
+    background: #fff;
+    text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 800; color: #374151; letter-spacing: 0.8px;
+  }
+
+  /* ===== MAIN GRID ===== */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 165px 1fr 165px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  /* Generic box */
+  .box {
+    border: 1.2px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 7px;
+    background: #ffffff;
+  }
+  .box-title {
+    font-size: 8.5px; font-weight: 800; color: #374151;
+    letter-spacing: 0.5px; margin-bottom: 1px; text-align: center;
+  }
+  .box-sub { font-size: 7.5px; color: #6b7280; text-align: center; margin-bottom: 4px; font-style: italic; }
+
+  .item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 2px 5px;
+    margin-bottom: 2px;
+    font-size: 8.5px;
+    color: #1f2937;
+    line-height: 1.2;
+  }
+  .item small { color: #6b7280; display: block; font-size: 7.5px; margin-top: 0px; line-height: 1.15; }
+  .item:last-child { margin-bottom: 0; }
+
+  /* Admin column */
+  .admin-col .box-title { color: #1e40af; }
+  .admin-icon {
+    display: flex; align-items: center; gap: 4px;
+    background: #ffffff; border: 1px solid #dbeafe; border-radius: 3px;
+    padding: 2px 5px; margin-bottom: 2px; font-size: 8.5px;
+  }
+  .admin-icon span.ic { font-size: 11px; width: 14px; text-align: center; }
+  .section-label {
+    margin: 4px 0 2px 0; font-size: 7.5px; font-weight:700;
+    color:#1e40af; letter-spacing:0.3px;
+  }
+
+  /* Center platform */
+  .platform {
+    border: 1.2px solid #6366f1;
+    border-radius: 6px;
+    padding: 6px;
+    background: #eef2ff;
+  }
+  .platform-title {
+    font-size: 10px; font-weight: 800; color: #4338ca;
+    letter-spacing: 0.5px; margin-bottom: 1px; text-align: center;
+  }
+  .platform-sub {
+    font-size: 7.5px; color: #6366f1; text-align: center; margin-bottom: 5px; font-style: italic;
+  }
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+
+  .col-frontend { border-color: #f59e0b; background: #fffbeb; }
+  .col-frontend .box-title { color: #92400e; }
+  .col-backend { border-color: #10b981; background: #ecfdf5; }
+  .col-backend .box-title { color: #065f46; }
+  .col-db { border-color: #3b82f6; background: #eff6ff; }
+  .col-db .box-title { color: #1e40af; }
+  .col-cache { border-color: #f97316; background: #fff7ed; }
+  .col-cache .box-title { color: #9a3412; }
+  .col-storage { border-color: #8b5cf6; background: #f5f3ff; }
+  .col-storage .box-title { color: #5b21b6; }
+
+  /* Right external column */
+  .ext-card {
+    border: 1.2px solid #e5e7eb;
+    border-radius: 5px;
+    padding: 5px 7px;
+    margin-bottom: 4px;
+    background: #ffffff;
+  }
+  .ext-card .ext-name {
+    font-weight: 800; font-size: 9px; color: #111827; margin-bottom: 1px;
+  }
+  .ext-card .ext-sub { font-size: 7.5px; color: #6b7280; margin-bottom: 2px; font-style: italic; }
+  .ext-card ul { margin: 0; padding-left: 11px; font-size: 8px; color: #374151; line-height: 1.25; }
+
+  .directo-card { border-color: #dc2626; background: #fef2f2; }
+  .directo-card .ext-name { color: #991b1b; }
+
+  .pos-card { border-color: #0891b2; background: #ecfeff; }
+  .pos-card .ext-name { color: #155e75; }
+
+  .montonio-card { border-color: #f97316; background: #fff7ed; }
+  .montonio-card .ext-name { color: #9a3412; }
+
+  .firebase-card { border-color: #f59e0b; background: #fffbeb; }
+  .firebase-card .ext-name { color: #92400e; }
+
+  .gmaps-card { border-color: #4285f4; background: #eff6ff; }
+  .gmaps-card .ext-name { color: #1a73e8; }
+
+  .resend-card { border-color: #10b981; background: #ecfdf5; }
+  .resend-card .ext-name { color: #065f46; }
+
+  /* Server / hosting strip */
+  .edge {
+    border: 1.2px solid #94a3b8;
+    border-radius: 6px;
+    padding: 5px 8px;
+    margin-bottom: 6px;
+    background: #f8fafc;
+  }
+  .edge-title { font-size: 9px; font-weight: 800; color: #334155; text-align: center; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .edge-row { display: flex; justify-content: space-around; gap: 6px; }
+  .edge-node { text-align: center; font-size: 8px; color: #475569; flex: 1; }
+  .edge-node .srv { font-size: 13px; }
+  .edge-node b { color: #1e293b; display: block; font-size: 8.5px; }
+
+  /* Bottom flow boxes */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 4px;
+  }
+  .flowbox {
+    border: 1.2px solid;
+    border-radius: 5px;
+    padding: 5px 6px;
+    font-size: 8px;
+    line-height: 1.3;
+  }
+  .flowbox h4 {
+    margin: 0 0 3px 0; font-size: 8.5px; font-weight: 800; letter-spacing: 0.3px;
+  }
+  .flowbox ol, .flowbox ul { margin: 0; padding-left: 12px; }
+  .flowbox li { margin-bottom: 1px; }
+
+  .fb-load { border-color: #3b82f6; background: #eff6ff; color: #1e3a8a; }
+  .fb-load h4 { color: #1d4ed8; }
+  .fb-loyalty { border-color: #10b981; background: #ecfdf5; color: #064e3b; }
+  .fb-loyalty h4 { color: #047857; }
+  .fb-cron { border-color: #ef4444; background: #fef2f2; color: #7f1d1d; }
+  .fb-cron h4 { color: #b91c1c; }
+  .fb-marketing { border-color: #f59e0b; background: #fffbeb; color: #78350f; }
+  .fb-marketing h4 { color: #b45309; }
+  .fb-security { border-color: #6b7280; background: #f9fafb; color: #1f2937; }
+  .fb-security h4 { color: #374151; }
+  .fb-deploy { border-color: #8b5cf6; background: #f5f3ff; color: #4c1d95; }
+  .fb-deploy h4 { color: #6d28d9; }
+  .fb-mobile { border-color: #ec4899; background: #fdf2f8; color: #831843; }
+  .fb-mobile h4 { color: #be185d; }
+
+  /* Tech stack footer */
+  .tech-stack {
+    margin-top: 4px;
+    padding: 5px 8px;
+    border-top: 1.5px solid #e5e7eb;
+    font-size: 8px;
+    color: #4b5563;
+    line-height: 1.4;
+  }
+  .tech-stack b { color: #111827; }
+  .tech-stack .label { font-weight: 800; color: #111827; letter-spacing: 0.5px; font-size: 8.5px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <h1>COFFEE IN — KLUBIKAARDI RAKENDUSE ARHITEKTUUR</h1>
+    <div class="subtitle">PHP 8.4 + Slim 4 (jagatud server, coffeein.eu) | Kotlin + Swift natively | Directo + POS</div>
+  </div>
+
+  <!-- ===== TOP ROW ===== -->
+  <div class="top-row">
+
+    <div class="benefits-box">
+      <h4>MIS SEE ANNAB?</h4>
+      <ul>
+        <li>Madalad kulud (~10 €/kuus)</li>
+        <li>Native UX (Kotlin + Swift)</li>
+        <li>Sayvi saldo + intress</li>
+        <li>Tasemete süsteem</li>
+        <li>POS integratsioon</li>
+        <li>Eripakkumised + promokoodid</li>
+        <li>Üks tõe allikas — Directo</li>
+      </ul>
+    </div>
+
+    <div class="userflow">
+      <div class="userflow-title">KASUTAJA TEEKOND (HIGH LEVEL FLOW)</div>
+      <div class="flow-row">
+        <div class="flow-step"><div class="flow-icon">🔐</div>1. Logi sisse<br>(e-mail+parool)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">👤</div>2. Minu profiil<br>+ Sayvi saldo</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">💰</div>3. Osta Sayvi<br>(Montonio)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">🪪</div>4. E-klubikaart<br>nr 114109</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">📷</div>5. POS skannib<br>kohvikus</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">☕</div>6. Tasub Sayviga<br>+ tase tõuseb</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">🎁</div>7. Eripakkumine<br>/ promokood</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-icon">⭐</div>8. Tagasiside<br>kohvikule</div>
+      </div>
+    </div>
+
+    <div class="ext-title-slot">VÄLISED TEENUSED</div>
+  </div>
+
+  <!-- ===== MAIN GRID ===== -->
+  <div class="main-grid">
+
+    <!-- LEFT: Mobile clients -->
+    <div class="box admin-col">
+      <div class="box-title">MOBIILIKLIENDID</div>
+      <div class="box-sub">Android + iOS</div>
+
+      <div class="admin-icon"><span class="ic">📱</span><b>Android</b></div>
+      <div class="item"><small>Kotlin + Gradle (KTS)<br>XML layouts (ei Jetpack)<br>min SDK 26</small></div>
+      <div class="admin-icon"><span class="ic">🍎</span><b>iOS</b></div>
+      <div class="item"><small>Swift + SwiftUI<br>iOS 15+</small></div>
+
+      <div class="section-label">JAGATUD KIHID</div>
+      <div class="admin-icon"><span class="ic">📡</span>Network (Retrofit/URLSession)</div>
+      <div class="admin-icon"><span class="ic">🔐</span>Auth (JWT)</div>
+      <div class="admin-icon"><span class="ic">💽</span>SQLite cache</div>
+      <div class="admin-icon"><span class="ic">💳</span>Maksete SDK (Montonio)</div>
+      <div class="admin-icon"><span class="ic">🗺️</span>Google Maps SDK</div>
+      <div class="admin-icon"><span class="ic">🔔</span>FCM / APNs handler</div>
+
+      <div class="section-label">MENÜÜ &amp; VAATED</div>
+      <div class="admin-icon"><span class="ic">👤</span>Minu profiil</div>
+      <div class="admin-icon"><span class="ic">⏰</span>Eripakkumised (3)</div>
+      <div class="admin-icon"><span class="ic">☕</span>Kohvivalik</div>
+      <div class="admin-icon"><span class="ic">💰</span>Osta Sayvi</div>
+      <div class="admin-icon"><span class="ic">📍</span>Leia Coffee In</div>
+      <div class="admin-icon"><span class="ic">📘</span>Coffee In Facebook</div>
+      <div class="admin-icon"><span class="ic">🌐</span>Boonussüsteem</div>
+      <div class="admin-icon"><span class="ic">⚙️</span>Minu seaded</div>
+      <div class="admin-icon"><span class="ic">❤️</span>Tagasiside</div>
+      <div class="admin-icon"><span class="ic">💬</span>Suhtle meiega</div>
+      <div class="admin-icon"><span class="ic">🎟️</span>Promokood</div>
+      <div class="admin-icon"><span class="ic">🚪</span>Logi välja</div>
+    </div>
+
+    <!-- CENTER: Backend platform -->
+    <div class="platform">
+      <div class="platform-title">BACKEND PLATVORM (JAGATUD SERVER)</div>
+      <div class="platform-sub">Apache + PHP 8.4 + Slim 4 — coffeein.eu</div>
+
+      <div class="platform-grid">
+
+        <!-- Apache -->
+        <div class="box col-frontend">
+          <div class="box-title">APACHE + .HTACCESS</div>
+          <div class="box-sub">Sissepääs</div>
+          <div class="item"><b>Apache 2.4</b></div>
+          <div class="item">.htaccess → index.php</div>
+          <div class="item">SSL Let's Encrypt</div>
+          <div class="item">CORS päised</div>
+          <div class="item">Gzip / Deflate</div>
+          <div class="item">Browser cache</div>
+          <div class="item">Static /public/uploads</div>
+        </div>
+
+        <!-- Slim 4 -->
+        <div class="box col-backend">
+          <div class="box-title">SLIM 4 RAKENDUS</div>
+          <div class="box-sub">Lojaalsuse loogika</div>
+          <div class="item"><b>Router /api/v1/*</b></div>
+          <div class="item"><b>Middleware</b><br><small>Auth, CORS, rate limit</small></div>
+          <div class="item">JWT + refresh tokens</div>
+          <div class="item">Minu profiil API</div>
+          <div class="item"><b>E-klubikaart</b><br><small>nr 114109</small></div>
+          <div class="item"><b>Sayvi rahakott</b></div>
+          <div class="item"><b>Sayvi intress</b><br><small>autom. arvutus</small></div>
+          <div class="item"><b>Osta Sayvi</b><br><small>Montonio + cron poll</small></div>
+          <div class="item"><b>Tasemete süsteem</b><br><small>kuu jookide järgi</small></div>
+          <div class="item">Kohvivalik API</div>
+          <div class="item"><b>Eripakkumised</b></div>
+          <div class="item"><b>Promokoodid</b></div>
+          <div class="item"><b>Tagasiside moodul</b></div>
+          <div class="item">Kohvikute API</div>
+          <div class="item">Suhtle meiega</div>
+          <div class="item">Push (FCM+APNs)</div>
+          <div class="item"><b>↔ Directo klient</b></div>
+          <div class="item"><b>↔ POS API</b></div>
+        </div>
+
+        <!-- MySQL -->
+        <div class="box col-db">
+          <div class="box-title">MySQL 8</div>
+          <div class="box-sub">Andmebaas</div>
+          <div class="item">users</div>
+          <div class="item">refresh_tokens</div>
+          <div class="item"><b>members</b><br><small>kaardi nr, tase</small></div>
+          <div class="item"><b>sayvi_balance</b></div>
+          <div class="item"><b>sayvi_transactions</b></div>
+          <div class="item"><b>sayvi_interest</b></div>
+          <div class="item"><b>top_ups</b><br><small>Montonio</small></div>
+          <div class="item"><b>tier_history</b></div>
+          <div class="item">products</div>
+          <div class="item">product_groups</div>
+          <div class="item">purchases<br><small>POS tehingud</small></div>
+          <div class="item"><b>special_offers</b></div>
+          <div class="item"><b>promo_codes</b></div>
+          <div class="item">promo_redemptions</div>
+          <div class="item">cafes</div>
+          <div class="item"><b>feedback</b></div>
+          <div class="item">contact_messages</div>
+          <div class="item">push_tokens</div>
+          <div class="item">audit_log</div>
+        </div>
+
+        <!-- Cache -->
+        <div class="box col-cache">
+          <div class="box-title">APCu / FILE CACHE</div>
+          <div class="box-sub">Võtme-väärtus</div>
+          <div class="item">JWT blacklist</div>
+          <div class="item">Sayvi saldo (TTL 30s)</div>
+          <div class="item">Kohvivalik (TTL 5m)</div>
+          <div class="item">Eripakkumised (TTL 5m)</div>
+          <div class="item">Promokoodide cache</div>
+          <div class="item">Kohvikud (TTL 1h)</div>
+          <div class="item">Directo päringud</div>
+          <div class="item">Rate limit</div>
+          <div class="item">Tasemete loogika</div>
+          <div class="item" style="background:#fef2f2; border-color:#fecaca; color:#991b1b;">
+            <b>NB!</b> Redist ei ole
+          </div>
+        </div>
+
+        <!-- Storage -->
+        <div class="box col-storage">
+          <div class="box-title">FAILIHOIDLA</div>
+          <div class="box-sub">/storage</div>
+          <div class="item">/products</div>
+          <div class="item">/offers</div>
+          <div class="item">/cafes</div>
+          <div class="item">/avatars</div>
+          <div class="item">/feedback</div>
+          <div class="item">/logs<br><small>Monolog rotation</small></div>
+          <div class="item">/backups<br><small>DB dump (cron)</small></div>
+          <div class="item">/queue<br><small>jobs failidena</small></div>
+          <div class="item">/cache<br><small>Symfony Cache</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: External services -->
+    <div>
+      <div class="ext-card directo-card">
+        <div class="ext-name">DIRECTO ERP</div>
+        <div class="ext-sub">Keskne andmeallikas</div>
+        <ul>
+          <li>Klientide andmebaas</li>
+          <li>Müügitehingud (POS)</li>
+          <li>Tooted &amp; hinnad</li>
+          <li>Kampaaniad</li>
+          <li>Sünkroon ainult cron'iga<br>(webhook'e ei ole)</li>
+        </ul>
+      </div>
+
+      <div class="ext-card pos-card">
+        <div class="ext-name">POS SÜSTEEM</div>
+        <div class="ext-sub">Kassa kohvikus</div>
+        <ul>
+          <li>E-klubikaardi tuvastamine</li>
+          <li>Sayvi saldolt mahaarvutus</li>
+          <li>Joogi loendamine (tase)</li>
+          <li>Promokoodi kontroll</li>
+          <li>Tehingu API → Slim</li>
+        </ul>
+      </div>
+
+      <div class="ext-card montonio-card">
+        <div class="ext-name">Montonio</div>
+        <div class="ext-sub">Osta Sayvi (top-up ainult)</div>
+        <ul>
+          <li>Pangalink, kaardimaksed</li>
+          <li>Apple/Google Pay</li>
+          <li>Sayvi täiendus 5/10/25/50 €</li>
+          <li>NB! mitte e-poeks</li>
+        </ul>
+      </div>
+
+      <div class="ext-card firebase-card">
+        <div class="ext-name">Firebase</div>
+        <div class="ext-sub">FCM + APNs + tools</div>
+        <ul>
+          <li>Cloud Messaging (Android)</li>
+          <li>APNs (iOS)</li>
+          <li>Crashlytics</li>
+          <li>Analytics + Remote Config</li>
+        </ul>
+      </div>
+
+      <div class="ext-card gmaps-card">
+        <div class="ext-name">Google Maps</div>
+        <div class="ext-sub">"Leia Coffee In"</div>
+        <ul>
+          <li>Kohvikute markerid</li>
+          <li>GPS asukoht</li>
+          <li>Maps SDK (And + iOS)</li>
+        </ul>
+      </div>
+
+      <div class="ext-card resend-card">
+        <div class="ext-name">Resend</div>
+        <div class="ext-sub">E-kirjad</div>
+        <ul>
+          <li>Konto kinnitus</li>
+          <li>Parooli reset</li>
+          <li>Uudiskiri / kampaaniad</li>
+          <li>Sentry — error tracking</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HOSTING INFRASTRUCTURE STRIP ===== -->
+  <div class="edge">
+    <div class="edge-title">JAGATUD SERVERI INFRASTRUKTUUR (coffeein.eu) — üks hosting konto, kõik komponendid sama serveri ressursside piires</div>
+    <div class="edge-row">
+      <div class="edge-node"><div class="srv">🖥️</div><b>Apache + PHP 8.4</b>jagatud server</div>
+      <div class="edge-node"><div class="srv">💾</div><b>MySQL 8</b>hosting'u DB</div>
+      <div class="edge-node"><div class="srv">📁</div><b>Failisüsteem</b>cache + uploads</div>
+      <div class="edge-node"><div class="srv">⏰</div><b>Cron tabel</b>plaanitud tööd</div>
+      <div class="edge-node"><div class="srv">🌐</div><b>SSL + DNS</b>Let's Encrypt</div>
+      <div class="edge-node"><div class="srv">📤</div><b>SSH / SFTP</b>deploy</div>
+      <div class="edge-node"><div class="srv">🛡️</div><b>Cloudflare</b>WAF + DDoS</div>
+    </div>
+  </div>
+
+  <!-- ===== BOTTOM FLOWS ===== -->
+  <div class="bottom-grid">
+
+    <div class="flowbox fb-load">
+      <h4>📥 PÄRINGU FLOW</h4>
+      <ol>
+        <li>HTTPS → api.coffeein.eu</li>
+        <li>Cloudflare WAF</li>
+        <li>Apache → index.php</li>
+        <li>Slim 4 router</li>
+        <li>Middleware: JWT, CORS</li>
+        <li>Controller → Service</li>
+        <li>Cache (file/APCu)</li>
+        <li>Directo / MySQL</li>
+        <li>JSON vastus &lt;500ms</li>
+      </ol>
+    </div>
+
+    <div class="flowbox fb-loyalty">
+      <h4>☕ KOHVIKU OSTU FLOW</h4>
+      <ol>
+        <li>Liige avab "Minu profiil"</li>
+        <li>Näitab kaardi nr 114109</li>
+        <li>POS sisestab kaardi</li>
+        <li>POS küsib liikme info</li>
+        <li>POS arvutab summa</li>
+        <li>Saadab tehingu Slim'i</li>
+        <li>Sayvi saldolt -€</li>
+        <li>+1 jook tasemele</li>
+        <li>Cron → Directosse</li>
+        <li>Push: "-2,50 €"</li>
+      </ol>
+    </div>
+
+    <div class="flowbox fb-cron">
+      <h4>⏰ CRON TÖÖD<br>(asendab webhook'id)</h4>
+      <ul>
+        <li><b>2–5 min:</b> Montonio polling</li>
+        <li><b>5 min:</b> queue töötlus</li>
+        <li><b>10 min:</b> POS → Directo</li>
+        <li><b>15 min:</b> Directo sünkroon</li>
+        <li><b>1h:</b> kohvikute info</li>
+        <li><b>Päevas (öösel):</b><br><b>Sayvi intressi arvutus</b></li>
+        <li><b>Kuu lõpus:</b> tasemete arv.</li>
+        <li><b>Päevas:</b> DB backup</li>
+      </ul>
+    </div>
+
+    <div class="flowbox fb-marketing">
+      <h4>🎁 ERIPAKK. &amp; PROMO</h4>
+      <ul>
+        <li><b>Eripakkumised</b> badge (3)</li>
+        <li><b>Promokoodid</b> sisestus</li>
+        <li>Sünnipäeva-pakkumine</li>
+        <li>Tagasi-tooja kampaania</li>
+        <li>Topelt-Sayvi päev</li>
+        <li>Uue kohviku push</li>
+        <li>Uudiskiri (Resend)</li>
+      </ul>
+    </div>
+
+    <div class="flowbox fb-security">
+      <h4>🛡️ TURVALISUS</h4>
+      <ul>
+        <li>HTTPS + HSTS</li>
+        <li>JWT (RS256) + refresh</li>
+        <li>Argon2id parool</li>
+        <li>Idempotentsus (POS req_id)</li>
+        <li>Rate limiting</li>
+        <li>PDO prepared</li>
+        <li>CSRF / XSS kaitse</li>
+        <li>Cloudflare WAF</li>
+        <li>POS — IP whitelist</li>
+        <li>Audit log</li>
+        <li>GDPR — kustutamine</li>
+      </ul>
+    </div>
+
+    <div class="flowbox fb-deploy">
+      <h4>🚀 DEPLOY &amp; CI/CD</h4>
+      <ol>
+        <li>GitHub repo</li>
+        <li>GitHub Actions</li>
+        <li>PHPStan + Psalm</li>
+        <li>Pest / PHPUnit testid</li>
+        <li>SSH + git pull</li>
+        <li>composer --no-dev</li>
+        <li>Phinx migratsioonid</li>
+        <li>Cache puhastus</li>
+        <li>Health check</li>
+      </ol>
+    </div>
+
+    <div class="flowbox fb-mobile">
+      <h4>📱 MOBIILI BUILD</h4>
+      <ul>
+        <li><b>Android:</b> Kotlin + Gradle<br>XML layouts → AAB</li>
+        <li>Google Play (signed)</li>
+        <li><b>iOS:</b> Xcode → .ipa</li>
+        <li>TestFlight → App Store</li>
+        <li>Remote Config (A/B)</li>
+        <li>Crashlytics</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== TECH STACK ===== -->
+  <div class="tech-stack">
+    <span class="label">TEHNOLOOGIA STACK</span>
+    <b>Backend:</b> PHP 8.4 + Slim 4 (PSR-7/15) | <b>Server:</b> Apache 2.4 + .htaccess (jagatud, coffeein.eu) | <b>DB:</b> MySQL 8 | <b>Cache:</b> APCu + Symfony Cache (file) | <b>HTTP klient:</b> Guzzle | <b>Auth:</b> firebase/php-jwt | <b>Logging:</b> Monolog + Sentry | <b>ORM:</b> Doctrine DBAL | <b>Migratsioonid:</b> Phinx | <b>Test:</b> Pest / PHPUnit | <b>Deploy:</b> SSH + git pull | <b>CI:</b> GitHub Actions
+    &nbsp;||&nbsp;
+    <b>Android:</b> Kotlin + Gradle (KTS) + XML layouts + Activities/Fragments + Retrofit + OkHttp + SQLite + Google Maps SDK (ei Jetpack) | <b>iOS:</b> Swift + SwiftUI + Combine + SwiftData + MapKit | <b>Push:</b> FCM + APNs | <b>ERP:</b> Directo | <b>POS:</b> REST API | <b>Maksed:</b> Montonio (top-up) | <b>Kaardid:</b> Google Maps | <b>E-mail:</b> Resend | <b>Monitoring:</b> Sentry + UptimeRobot | <b>Proxy:</b> Cloudflare (WAF + CDN)
+  </div>
+
+</div>
+</body>
+</html>
