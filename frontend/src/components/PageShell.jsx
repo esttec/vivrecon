@@ -1,6 +1,7 @@
 import AppSidebar from './AppSidebar'
 import BottomNav  from './BottomNav'
 import ChatWidget from './ChatWidget'
+import AdBanner   from './AdBanner'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { t } from '../theme'
@@ -30,6 +31,7 @@ export default function PageShell({ children }) {
           <span style={s.mobileTitle}>{PAGE_LABELS[pathname] ?? ''}</span>
         </header>
         {children}
+        <div style={{ padding: '0 12px' }}><AdBanner /></div>
         <BottomNav />
         <ChatWidget />
       </div>
@@ -41,6 +43,7 @@ export default function PageShell({ children }) {
       <AppSidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {children}
+        <div style={{ padding: '0 32px' }}><AdBanner /></div>
       </div>
       <ChatWidget />
     </div>

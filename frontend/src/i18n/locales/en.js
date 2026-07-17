@@ -73,6 +73,8 @@ export default {
   'premium.import': 'Data import',
   'premium.importDesc': 'Import your bank statements from CSV, XML or PDF.',
   'premium.noAds': 'No ads',
+  'ad.label': 'Ad',
+  'ad.removeAds': 'Enjoying vivrecon? Go Premium to remove ads.',
   'assistant.title': 'Financial assistant',
   'assistant.intro': 'Ask me anything about your budget, spending or goals.',
   'assistant.placeholder': 'Ask a question…',
