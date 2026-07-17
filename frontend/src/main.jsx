@@ -19,6 +19,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import CategoriesPage from './pages/CategoriesPage'
 import AccountsPage from './pages/AccountsPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
+import ChildrenPage from './pages/ChildrenPage'
 import TermsPage from './pages/TermsPage'
 import './index.css'
 
@@ -50,6 +51,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/categories" element={<PrivateRoute><CategoriesPage /></PrivateRoute>} />
         <Route path="/accounts"  element={<PrivateRoute><AccountsPage /></PrivateRoute>} />
         <Route path="/subscriptions" element={<PrivateRoute><SubscriptionsPage /></PrivateRoute>} />
+        <Route path="/children" element={<PrivateRoute><ChildrenPage /></PrivateRoute>} />
         <Route path="*"         element={<Navigate to="/budget" replace />} />
       </Routes>
     </BrowserRouter>

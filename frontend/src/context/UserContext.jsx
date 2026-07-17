@@ -34,6 +34,7 @@ export function UserProvider({ children }) {
   const premium       = user?.premium ?? false
   const paid          = user?.paid ?? false
   const trialDaysLeft = user?.trialDaysLeft ?? 0
+  const premiumUntil  = user?.premiumUntil ?? null
 
   // Helper: format a number in the user's currency
   function fmt(amount) {
@@ -51,6 +52,7 @@ export function UserProvider({ children }) {
       premium,
       paid,
       trialDaysLeft,
+      premiumUntil,
       fmt,
       refreshUser,
       setUser,

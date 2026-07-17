@@ -131,6 +131,17 @@ interface SubscriptionRepository : JpaRepository<SubscriptionEntity, Long> {
     fun findByIdAndUserId(id: Long, userId: Long): java.util.Optional<SubscriptionEntity>
 }
 
+// ── Children ─────────────────────────────────────────────────────────────────
+
+interface ChildRepository : JpaRepository<ChildEntity, Long> {
+    fun findAllByUserIdOrderByCreatedAtAsc(userId: Long): List<ChildEntity>
+    fun findByIdAndUserId(id: Long, userId: Long): java.util.Optional<ChildEntity>
+}
+
+interface ChildExpenseRepository : JpaRepository<ChildExpenseEntity, Long> {
+    fun findAllByChildIdAndYearMonthOrderByCreatedAtDesc(childId: Long, yearMonth: String): List<ChildExpenseEntity>
+}
+
 // ── User categories ──────────────────────────────────────────────────────────
 
 interface UserCategoryRepository : JpaRepository<UserCategoryEntity, Long> {

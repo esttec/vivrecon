@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import PageShell from '../components/PageShell'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -23,8 +23,9 @@ const FEATURES = [
 
 export default function PremiumPage() {
   const isMobile = useIsMobile()
-  const { premium, paid, trialDaysLeft, refreshUser } = useUser()
+  const { premium, paid, trialDaysLeft, premiumUntil, refreshUser } = useUser()
   const { t: tr } = useT()
+  const navigate = useNavigate()
   const [activating, setActivating] = useState(false)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
@@ -55,59 +56,66 @@ export default function PremiumPage() {
   return (
     <PageShell>
       <main style={{ ...s.main, padding: isMobile ? '20px 14px' : '32px' }}>
-        <div style={s.hero}>
-          <div style={{ display: 'flex', justifyContent: 'center' }}><Ico e="⭐" size={40} color="#f0c040" /></div>
-          <h1 style={s.title}>{tr('premium.title')}</h1>
-          <p style={s.subtitle}>{tr('premium.subtitle')}</p>
-          <div style={s.status}>
-            {trialDaysLeft > 0
-              ? tr('premium.trialActive', { days: trialDaysLeft })
-              : premium ? tr('premium.activeStatus') : tr('common.freePlan')}
-          </div>
-        </div>
-
-        <div style={s.card}>
-          <div style={s.included}>{tr('premium.included')}</div>
-          {FEATURES.map(f => (
-            <div key={f.key} style={s.row}>
-              <span style={{ width: 28, flexShrink: 0, display: 'inline-flex', justifyContent: 'center' }}><Ico e={f.icon} size={20} color={t.navyMid} /></span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, color: t.navy, fontWeight: f.descKey ? 600 : 400 }}>{tr(f.key)}</div>
-                {f.descKey && <div style={s.rowDesc}>{tr(f.descKey)}</div>}
-              </div>
-              <span style={{ color: '#2e8b57', alignSelf: 'flex-start', marginTop: 2, display: 'inline-flex' }}><Ico e="✓" size={15} /></span>
-            </div>
-          ))}
-        </div>
-
-        {msg && <p style={{ ...s.note, color: '#1e6b3a', background: '#eaf7ee', border: '1px solid #bcdcc4', borderRadius: 10, padding: '10px 14px' }}>{msg}</p>}
-
         {paid ? (
-          <button style={{ ...s.cta, opacity: 0.6 }} disabled>{tr('premium.activeStatus')}</button>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label style={s.agreeRow}>
-              <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, flexShrink: 0 }} />
-              <span>{tr('premium.disclaimer')} <Link to="/terms" style={s.termsLink}>{tr('premium.termsLink')}</Link></span>
-            </label>
-            <button
-              style={{ ...s.cta, ...((activating || !agreed) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
-              onClick={() => startCheckout('yearly')}
-              disabled={activating || !agreed}
-            >
-              {activating ? '…' : tr('premium.subscribeYearly')}
-            </button>
-            <button
-              style={{ ...s.ctaAlt, ...((activating || !agreed) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
-              onClick={() => startCheckout('monthly')}
-              disabled={activating || !agreed}
-            >
-              {activating ? '…' : tr('premium.subscribeMonthly')}
-            </button>
+          <div style={s.activeWrap}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}><Ico e="⭐" size={44} color="#f0c040" /></div>
+            <h1 style={s.title}>{tr('premium.title')}</h1>
+            <div style={{ ...s.status, marginTop: 12 }}>{tr('premium.activeStatus')}</div>
+            {premiumUntil && <p style={s.nextPay}>{tr('premium.nextPayment', { date: premiumUntil })}</p>}
+            {msg && <p style={{ ...s.note, color: '#1e6b3a', background: '#eaf7ee', border: '1px solid #bcdcc4', borderRadius: 10, padding: '10px 14px' }}>{msg}</p>}
+            <button style={{ ...s.cta, marginTop: 18 }} onClick={() => navigate('/profile')}>{tr('premium.manageInProfile')}</button>
           </div>
-        )}
+        ) : (
+          <>
+            <div style={s.hero}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}><Ico e="⭐" size={40} color="#f0c040" /></div>
+              <h1 style={s.title}>{tr('premium.title')}</h1>
+              <p style={s.subtitle}>{tr('premium.subtitle')}</p>
+              <div style={s.status}>
+                {trialDaysLeft > 0 ? tr('premium.trialActive', { days: trialDaysLeft }) : tr('common.freePlan')}
+              </div>
+            </div>
 
-        {error && <p style={{ ...s.note, color: '#c0392b' }}>{error}</p>}
+            <div style={s.card}>
+              <div style={s.included}>{tr('premium.included')}</div>
+              {FEATURES.map(f => (
+                <div key={f.key} style={s.row}>
+                  <span style={{ width: 28, flexShrink: 0, display: 'inline-flex', justifyContent: 'center' }}><Ico e={f.icon} size={20} color={t.navyMid} /></span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, color: t.navy, fontWeight: f.descKey ? 600 : 400 }}>{tr(f.key)}</div>
+                    {f.descKey && <div style={s.rowDesc}>{tr(f.descKey)}</div>}
+                  </div>
+                  <span style={{ color: '#2e8b57', alignSelf: 'flex-start', marginTop: 2, display: 'inline-flex' }}><Ico e="✓" size={15} /></span>
+                </div>
+              ))}
+            </div>
+
+            {msg && <p style={{ ...s.note, color: '#1e6b3a', background: '#eaf7ee', border: '1px solid #bcdcc4', borderRadius: 10, padding: '10px 14px' }}>{msg}</p>}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <label style={s.agreeRow}>
+                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, flexShrink: 0 }} />
+                <span>{tr('premium.disclaimer')} <Link to="/terms" style={s.termsLink}>{tr('premium.termsLink')}</Link></span>
+              </label>
+              <button
+                style={{ ...s.cta, ...((activating || !agreed) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+                onClick={() => startCheckout('yearly')}
+                disabled={activating || !agreed}
+              >
+                {activating ? '…' : tr('premium.subscribeYearly')}
+              </button>
+              <button
+                style={{ ...s.ctaAlt, ...((activating || !agreed) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+                onClick={() => startCheckout('monthly')}
+                disabled={activating || !agreed}
+              >
+                {activating ? '…' : tr('premium.subscribeMonthly')}
+              </button>
+            </div>
+
+            {error && <p style={{ ...s.note, color: '#c0392b' }}>{error}</p>}
+          </>
+        )}
       </main>
     </PageShell>
   )
@@ -136,4 +144,6 @@ const s = {
   note:     { textAlign: 'center', fontSize: 12, color: t.navyLight, marginTop: 10 },
   termsLink:{ color: t.navyMid, fontWeight: 700, textDecoration: 'underline' },
   agreeRow: { display: 'flex', gap: 9, alignItems: 'flex-start', textAlign: 'left', fontSize: 13, color: t.navyLight, lineHeight: 1.5, background: '#f5f8ff', border: `1px solid ${t.border}`, borderRadius: 10, padding: '12px 14px' },
+  activeWrap:{ textAlign: 'center', background: '#fff', border: `1px solid ${t.border}`, borderRadius: 16, padding: '32px 24px' },
+  nextPay:  { fontSize: 14, color: t.navy, marginTop: 12, fontWeight: 600 },
 }

@@ -36,7 +36,10 @@ class UserService(
             profile = profile?.toDto(),
             premium = paid || trialDaysLeft > 0,
             paid = paid,
-            trialDaysLeft = trialDaysLeft
+            trialDaysLeft = trialDaysLeft,
+            premiumUntil = if (paid) user.premiumUntil?.let {
+                java.time.LocalDate.ofInstant(it, java.time.ZoneOffset.UTC).toString()
+            } else null
         )
     }
 

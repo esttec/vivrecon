@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { key: 'nav.budget',   path: '/budget',   icon: '💰' },
   { key: 'nav.house',    path: '/house',    icon: '🏠' },
   { key: 'nav.eating',   path: '/eating',   icon: '🥗' },
+  { key: 'nav.children', path: '/children', icon: '🧒' },
   { key: 'nav.clothing', path: '/clothing', icon: '👗' },
   { key: 'nav.travel',   path: '/travel',   icon: '✈️' },
   { key: 'nav.debts',    path: '/debts',    icon: '💳' },

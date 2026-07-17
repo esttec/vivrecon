@@ -41,6 +41,18 @@ data class AccountResponse(val id: Long, val name: String, val type: String, val
 data class CheckoutRequest(val plan: String)          // "monthly" | "yearly"
 data class CheckoutResponse(val url: String)
 
+// ── Children ──────────────────────────────────────────────────────────────────
+
+data class CreateChildRequest(val name: String)
+data class ChildExpenseRequest(val name: String, val amount: BigDecimal, val yearMonth: String)
+data class ChildExpenseResponse(val id: Long, val name: String, val amount: BigDecimal, val yearMonth: String)
+data class ChildResponse(
+    val id: Long,
+    val name: String,
+    val total: BigDecimal,
+    val expenses: List<ChildExpenseResponse>
+)
+
 // ── Bank import & subscriptions ───────────────────────────────────────────────
 
 data class ImportTxItem(val date: String, val description: String, val amount: BigDecimal)
@@ -113,7 +125,8 @@ data class MeResponse(
     val profile: ProfileResponse?,
     val premium: Boolean = false,
     val paid: Boolean = false,
-    val trialDaysLeft: Int = 0
+    val trialDaysLeft: Int = 0,
+    val premiumUntil: String? = null
 )
 
 data class ProfileResponse(

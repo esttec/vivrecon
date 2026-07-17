@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { key: 'nav.budget',   path: '/budget'   },
   { key: 'nav.house',    path: '/house'    },
   { key: 'nav.eating',   path: '/eating'   },
+  { key: 'nav.children', path: '/children' },
   { key: 'nav.clothing', path: '/clothing' },
   { key: 'nav.travel',   path: '/travel'   },
   { key: 'nav.debts',    path: '/debts'    },

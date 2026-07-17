@@ -47,7 +47,7 @@ const CATEGORY_COLORS = {
 export default function ProfilePage() {
   const isMobile = useIsMobile()
   const navigate  = useNavigate()
-  const { user, profile, loading: userLoading, fmt, refreshUser } = useUser()
+  const { user, profile, loading: userLoading, fmt, refreshUser, paid, trialDaysLeft, premiumUntil } = useUser()
   const { t: tr, lang, setLang } = useT()
 
   // edit flow: null = not editing | 'categories' = step 1 | 'amounts' = step 2
@@ -269,6 +269,22 @@ export default function ProfilePage() {
         {/* ─── VIEW MODE ────────────────────────────────────────────────────── */}
         {editStep === null && (
           <>
+            {/* Subscription status */}
+            <div style={s.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <span style={{ display: 'inline-flex' }}><Ico e="⭐" size={22} color="#f0c040" /></span>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: t.navy }}>
+                    {paid ? tr('premium.activeStatus') : trialDaysLeft > 0 ? tr('premium.trialActive', { days: trialDaysLeft }) : tr('common.freePlan')}
+                  </div>
+                  {paid && premiumUntil && (
+                    <div style={{ fontSize: 13, color: t.navyLight, marginTop: 3 }}>{tr('premium.nextPayment', { date: premiumUntil })}</div>
+                  )}
+                </div>
+                {!paid && <button style={s.editBtn} onClick={() => navigate('/premium')}>{tr('premium.upgrade')}</button>}
+              </div>
+            </div>
+
             {/* Location — shown at the top */}
             <LocationCard profile={profile} />
 

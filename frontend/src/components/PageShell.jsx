@@ -21,7 +21,7 @@ export default function PageShell({ children }) {
 
   if (isMobile) {
     return (
-      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', flexDirection: 'column', paddingBottom: 64 }}>
+      <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex', flexDirection: 'column', paddingBottom: 64 }}>
         {/* Compact mobile header */}
         <header style={s.mobileHeader}>
           <span style={s.mobileLogo} onClick={() => navigate('/budget')}>
@@ -37,7 +37,7 @@ export default function PageShell({ children }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', display: 'flex' }}>
       <AppSidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {children}
