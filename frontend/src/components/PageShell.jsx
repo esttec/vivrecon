@@ -1,5 +1,5 @@
 import AppSidebar from './AppSidebar'
-import BottomNav  from './BottomNav'
+import MobileMenu from './MobileMenu'
 import ChatWidget from './ChatWidget'
 import AdBanner   from './AdBanner'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -28,11 +28,10 @@ export default function PageShell({ children }) {
           <span style={s.mobileLogo} onClick={() => navigate('/budget')}>
             viv<span style={{ color: t.navyMid }}>recon</span>
           </span>
-          <span style={s.mobileTitle}>{PAGE_LABELS[pathname] ?? ''}</span>
+          <MobileMenu />
         </header>
         {children}
         <div style={{ padding: '0 12px' }}><AdBanner /></div>
-        <BottomNav />
         <ChatWidget />
       </div>
     )
