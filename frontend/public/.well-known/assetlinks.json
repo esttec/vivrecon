@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.vivrecon",
+    "sha256_cert_fingerprints": ["AD:50:E6:97:7B:D6:60:8E:94:43:E1:43:99:A4:77:1B:70:F0:2C:5B:DA:75:F0:A7:D6:0B:36:C8:35:35:BB:6D"]
+  }
+}]
