@@ -4,7 +4,7 @@ import { apiFetch } from '../api/client'
 import { useUser } from '../context/UserContext'
 import { useIsMobile } from '../hooks/useIsMobile'
 import AppSidebar from '../components/AppSidebar'
-import BottomNav  from '../components/BottomNav'
+import MobileMenu from '../components/MobileMenu'
 import Ico from '../components/Icon'
 import { t } from '../theme'
 import { useT, LANGUAGES } from '../i18n'
@@ -248,17 +248,7 @@ export default function ProfilePage() {
           <span style={s.mobileLogo} onClick={() => navigate('/budget')}>
             viv<span style={{ color: t.navyMid }}>recon</span>
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <select
-              style={s.mobileLang}
-              value={lang}
-              onChange={e => setLang(e.target.value)}
-              aria-label={tr('common.language')}
-            >
-              {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-            </select>
-            <button style={s.mobileSignOut} onClick={logout}>{tr('common.signOut')}</button>
-          </div>
+          <MobileMenu />
         </header>
       )}
 
@@ -606,7 +596,6 @@ export default function ProfilePage() {
         )}
       </main>
 
-      {isMobile && <BottomNav />}
     </div>
   )
 }

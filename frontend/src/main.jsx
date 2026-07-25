@@ -21,6 +21,7 @@ import AccountsPage from './pages/AccountsPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import ChildrenPage from './pages/ChildrenPage'
 import TermsPage from './pages/TermsPage'
+import CookieConsent from './components/CookieConsent'
 import './index.css'
 
 function PrivateRoute({ children }) {
@@ -54,6 +55,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/children" element={<PrivateRoute><ChildrenPage /></PrivateRoute>} />
         <Route path="*"         element={<Navigate to="/budget" replace />} />
       </Routes>
+      <CookieConsent />
     </BrowserRouter>
     </UserProvider>
     </LanguageProvider>
