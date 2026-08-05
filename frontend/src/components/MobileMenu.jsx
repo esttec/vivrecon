@@ -23,7 +23,7 @@ export default function MobileMenu() {
   const [open, setOpen] = useState(false)
   const navigate     = useNavigate()
   const { pathname } = useLocation()
-  const { user, profile, premium, trialDaysLeft } = useUser()
+  const { user, profile, premium, paid, trialDaysLeft } = useUser()
   const { t: tr, lang, setLang } = useT()
 
   // Close the drawer whenever the route changes.
@@ -74,10 +74,13 @@ export default function MobileMenu() {
         </nav>
 
         <div style={s.bottom}>
-          <div style={s.premiumRow} onClick={() => go('/premium')}>
-            <Ico e="⭐" size={14} />{' '}
-            {trialDaysLeft > 0 ? tr('common.trialLeft', { days: trialDaysLeft }) : premium ? tr('common.premium') : tr('premium.upgrade')}
-          </div>
+          {/* Paid subscribers don't see the upgrade prompt — status lives in Profile. */}
+          {!paid && (
+            <div style={s.premiumRow} onClick={() => go('/premium')}>
+              <Ico e="⭐" size={14} />{' '}
+              {trialDaysLeft > 0 ? tr('common.trialLeft', { days: trialDaysLeft }) : tr('premium.upgrade')}
+            </div>
+          )}
           <div style={s.langRow}>
             <span style={s.langIcon}><Ico e="🌐" size={15} color="#dbe4f3" /></span>
             <select style={s.langSelect} value={lang} onChange={e => setLang(e.target.value)} aria-label={tr('common.language')}>

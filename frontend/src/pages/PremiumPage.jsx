@@ -34,10 +34,21 @@ export default function PremiumPage() {
   // Handle the redirect back from Stripe Checkout.
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('checkout')
-    if (p === 'success') { refreshUser(); setMsg(tr('premium.checkoutSuccess')) }
-    else if (p === 'cancel') { setMsg(tr('premium.checkoutCancel')) }
-    if (p) window.history.replaceState({}, '', '/premium')
+    if (p === 'success') {
+      // Payment done — refresh the user, then leave the sales page for good.
+      Promise.resolve(refreshUser()).finally(() => navigate('/budget', { replace: true }))
+    } else if (p === 'cancel') {
+      setMsg(tr('premium.checkoutCancel'))
+      window.history.replaceState({}, '', '/premium')
+    }
   }, [])
+
+  // Paid subscribers never see the sales page — subscription status lives in Profile.
+  useEffect(() => {
+    if (paid && !new URLSearchParams(window.location.search).get('checkout')) {
+      navigate('/budget', { replace: true })
+    }
+  }, [paid])
 
   async function startCheckout(plan) {
     if (paid || activating) return

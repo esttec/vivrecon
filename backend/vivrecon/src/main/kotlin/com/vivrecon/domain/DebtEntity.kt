@@ -40,6 +40,10 @@ data class DebtEntity(
     @Column(name = "payment_day")
     var paymentDay: Int? = null,
 
+    /** CREDIT_CARD, MORTGAGE, LOAN, CAR_LOAN, STUDENT_LOAN, PERSONAL, OTHER */
+    @Column(nullable = false, length = 32)
+    var kind: String = "OTHER",
+
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now()
 )

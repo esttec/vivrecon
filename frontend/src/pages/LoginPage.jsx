@@ -201,9 +201,9 @@ export default function LoginPage() {
           {/* ── Terms & Conditions ── */}
           <p style={s.terms}>
             By continuing you agree to our{' '}
-            <a href="#" style={s.termsLink} onClick={e => e.preventDefault()}>Terms of Service</a>
+            <a href="/terms" style={s.termsLink}>Terms of Service</a>
             {' '}and{' '}
-            <a href="#" style={s.termsLink} onClick={e => e.preventDefault()}>Privacy Policy</a>.
+            <a href="/privacy.html" target="_blank" rel="noopener" style={s.termsLink}>Privacy Policy</a>.
           </p>
         </div>
       </div>
@@ -228,9 +228,16 @@ function SocialBtn({ Icon, label, bg, color, border }) {
       }}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      onClick={() => alert(`${label} — coming soon`)}>
+      onClick={e => e.preventDefault()}
+      title="Coming soon">
       <Icon />
       {label}
+      <span style={{
+        fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase',
+        padding: '2px 6px', borderRadius: 5, marginLeft: 2,
+        background: color === '#fff' ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.08)',
+        color, opacity: 0.85,
+      }}>Coming soon</span>
     </button>
   )
 }

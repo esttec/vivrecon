@@ -21,7 +21,7 @@ const NAV_LINKS = [
 export default function AppSidebar() {
   const navigate     = useNavigate()
   const { pathname } = useLocation()
-  const { user, profile, premium, trialDaysLeft } = useUser()
+  const { user, profile, premium, paid, trialDaysLeft } = useUser()
   const { t: tr, lang, setLang } = useT()
 
   const displayName = profile?.displayName || user?.email || ''
@@ -58,12 +58,13 @@ export default function AppSidebar() {
       </nav>
 
       <div style={s.bottom}>
-        <div style={{ ...s.premiumRow, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => navigate('/premium')}>
-          <Ico e="⭐" size={14} />
-          {trialDaysLeft > 0
-            ? tr('common.trialLeft', { days: trialDaysLeft })
-            : premium ? tr('common.premium') : tr('premium.upgrade')}
-        </div>
+        {/* Paid subscribers don't see the upgrade prompt — status lives in Profile. */}
+        {!paid && (
+          <div style={{ ...s.premiumRow, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => navigate('/premium')}>
+            <Ico e="⭐" size={14} />
+            {trialDaysLeft > 0 ? tr('common.trialLeft', { days: trialDaysLeft }) : tr('premium.upgrade')}
+          </div>
+        )}
         <div style={s.social}>
           <a style={s.socialLink} href="https://www.instagram.com/vivreconapp" target="_blank" rel="noopener noreferrer">
             <span style={s.icon}><Ico e="📷" size={15} /></span>{tr('common.joinUs')} · Instagram

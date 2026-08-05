@@ -33,10 +33,46 @@ class DebtService(
                 lent = req.lent,
                 dueDate = req.dueDate,
                 monthlyPayment = req.monthlyPayment,
-                paymentDay = req.paymentDay?.coerceIn(1, 28)
+                paymentDay = req.paymentDay?.coerceIn(1, 28),
+                kind = normalizeKind(req.kind)
             )
         ).toDto()
     }
+
+    /** Edit an existing debt — change any field, including correcting a mistake. */
+    @Transactional
+    fun update(userId: Long, id: Long, req: CreateDebtRequest): DebtResponse {
+        require(req.name.isNotBlank()) { "Name is required" }
+        require(req.totalAmount > BigDecimal.ZERO) { "Amount must be greater than 0" }
+        val debt = debtRepo.findByIdAndUserId(id, userId)
+            .orElseThrow { NoSuchElementException("Debt not found") }
+        debt.name = req.name.trim()
+        debt.totalAmount = req.totalAmount
+        debt.lent = req.lent
+        debt.dueDate = req.dueDate
+        debt.monthlyPayment = req.monthlyPayment
+        debt.paymentDay = req.paymentDay?.coerceIn(1, 28)
+        debt.kind = normalizeKind(req.kind)
+        // A lowered total must not sit below what's already been paid.
+        if (debt.paidAmount > debt.totalAmount) debt.paidAmount = debt.totalAmount
+        return debtRepo.save(debt).toDto()
+    }
+
+    /** Undo a payment (subtract it back), e.g. when it was entered by mistake. */
+    @Transactional
+    fun unpay(userId: Long, id: Long, req: DebtPaymentRequest): DebtResponse {
+        require(req.amount > BigDecimal.ZERO) { "Amount must be greater than 0" }
+        val debt = debtRepo.findByIdAndUserId(id, userId)
+            .orElseThrow { NoSuchElementException("Debt not found") }
+        debt.paidAmount = (debt.paidAmount - req.amount).coerceAtLeast(BigDecimal.ZERO)
+        return debtRepo.save(debt).toDto()
+    }
+
+    private val kinds = setOf(
+        "CREDIT_CARD", "MORTGAGE", "LOAN", "CAR_LOAN", "STUDENT_LOAN", "PERSONAL", "OTHER"
+    )
+    private fun normalizeKind(raw: String?): String =
+        raw?.trim()?.uppercase()?.takeIf { it in kinds } ?: "OTHER"
 
     /** Record a payment towards a debt; never lets paid exceed the total. */
     @Transactional
@@ -70,7 +106,8 @@ class DebtService(
             monthlyPayment = monthlyPayment,
             paymentDay = paymentDay,
             nextPaymentDate = if (paidOff) null else nextPaymentDate(paymentDay)?.toString(),
-            overdue = !paidOff && dueDate?.isBefore(LocalDate.now()) == true
+            overdue = !paidOff && dueDate?.isBefore(LocalDate.now()) == true,
+            kind = kind
         )
     }
 

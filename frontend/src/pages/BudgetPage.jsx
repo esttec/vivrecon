@@ -203,15 +203,21 @@ export default function BudgetPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
           <h1 style={s.title}>{tr('budget.title')}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <button style={s.exportBtn} onClick={() => navigate('/analytics')}><Ico e="📊" size={15} style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 5 }} />{tr('analytics.title')}</button>
+            <button style={s.iconBtn} className="tip" data-tip={tr('analytics.title')}
+              onClick={() => navigate('/analytics')} aria-label={tr('analytics.title')}>
+              <Ico e="📊" size={18} />
+            </button>
             {tab === 'month' && (
               <button
-                style={s.exportBtn}
+                style={s.iconBtn}
+                className="tip"
+                data-tip={importing ? tr('import.importing') : tr('import.bank')}
+                aria-label={tr('import.bank')}
                 disabled={importing}
-                title={tr('import.hint')}
                 onClick={() => premium ? bankFileRef.current?.click() : navigate('/premium')}
               >
-                {importing ? tr('import.importing') : <><Ico e="⬆" size={14} style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 4 }} />{tr('import.bank')}</>} {premium ? '' : <Ico e="⭐" size={13} style={{ display: 'inline-block', verticalAlign: '-2px' }} />}
+                <Ico e="⬆" size={18} />
+                {!premium && <span style={s.lockDot}><Ico e="⭐" size={10} /></span>}
               </button>
             )}
             <input
@@ -222,8 +228,10 @@ export default function BudgetPage() {
               onChange={handleBankImport}
             />
             {tab === 'month' && budget && (
-              <button style={s.exportBtn} onClick={exportMonthCsv} title={tr('premium.export')}>
-                <Ico e="⭳" size={14} style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 4 }} />CSV {premium ? '' : <Ico e="⭐" size={13} style={{ display: 'inline-block', verticalAlign: '-2px' }} />}
+              <button style={s.iconBtn} className="tip" data-tip={tr('premium.export')}
+                onClick={exportMonthCsv} aria-label={tr('premium.export')}>
+                <Ico e="⭳" size={18} />
+                {!premium && <span style={s.lockDot}><Ico e="⭐" size={10} /></span>}
               </button>
             )}
             <div style={s.tabs}>
@@ -557,6 +565,8 @@ const s = {
   btnSecondary:{ padding: '9px 14px', border: `1px solid ${t.border}`, borderRadius: 8, background: '#fff', fontSize: 13, color: t.navyLight, cursor: 'pointer', flexShrink: 0 },
   btnSmall:    { padding: '5px 12px', border: `1px solid ${t.border}`, borderRadius: 6, background: '#fff', fontSize: 13, color: t.navyMid, cursor: 'pointer', fontWeight: 600, flexShrink: 0 },
   exportBtn:   { padding: '6px 12px', border: `1px solid ${t.border}`, borderRadius: 8, background: '#fff', fontSize: 13, fontWeight: 600, color: t.navyMid, cursor: 'pointer', flexShrink: 0 },
+  iconBtn:     { position: 'relative', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, borderRadius: 10, background: '#fff', color: t.navyMid, cursor: 'pointer', flexShrink: 0, padding: 0 },
+  lockDot:     { position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: '50%', background: '#f0c040', color: '#5a4200', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   muted:       { color: t.navyLight, fontSize: 14, margin: '8px 0' },
   error:       { color: '#c0392b', fontSize: 14, marginBottom: 12 },
 }

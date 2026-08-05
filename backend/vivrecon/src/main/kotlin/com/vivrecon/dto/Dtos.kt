@@ -12,7 +12,8 @@ data class CreateDebtRequest(
     val lent: Boolean = false,
     val dueDate: LocalDate? = null,
     val monthlyPayment: BigDecimal? = null,
-    val paymentDay: Int? = null
+    val paymentDay: Int? = null,
+    val kind: String? = null
 )
 data class DebtPaymentRequest(val amount: BigDecimal)
 data class DebtResponse(
@@ -27,7 +28,8 @@ data class DebtResponse(
     val monthlyPayment: BigDecimal?,
     val paymentDay: Int?,
     val nextPaymentDate: String?,
-    val overdue: Boolean
+    val overdue: Boolean,
+    val kind: String = "OTHER"
 )
 
 // ── Accounts ──────────────────────────────────────────────────────────────────

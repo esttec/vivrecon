@@ -42,6 +42,11 @@ function monthsToClear(remainings, pool) {
   return rem.some(x => x > 0.005) ? Infinity : months
 }
 
+const BLANK_FORM = { name: '', totalAmount: '', lent: false, dueDate: '', scheduled: false, monthlyPayment: '', paymentDay: '1', kind: 'OTHER' }
+
+/** Debt kinds shown in the picker. */
+const DEBT_KINDS = ['CREDIT_CARD', 'MORTGAGE', 'LOAN', 'CAR_LOAN', 'STUDENT_LOAN', 'PERSONAL', 'OTHER']
+
 export default function DebtsPage() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
@@ -52,7 +57,8 @@ export default function DebtsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm]       = useState({ name: '', totalAmount: '', lent: false, dueDate: '', scheduled: false, monthlyPayment: '', paymentDay: '1' })
+  const [form, setForm]       = useState(BLANK_FORM)
+  const [editId, setEditId]   = useState(null)   // null = creating, id = editing
   const [payingId, setPayingId] = useState(null)
   const [payAmount, setPayAmount] = useState('')
 
@@ -77,17 +83,48 @@ export default function DebtsPage() {
 
   async function addDebt(e) {
     e.preventDefault()
+    const body = JSON.stringify({
+      name: form.name,
+      totalAmount: Number(form.totalAmount),
+      lent: form.lent,
+      dueDate: form.dueDate || null,
+      monthlyPayment: form.scheduled ? (Number(form.monthlyPayment) || null) : null,
+      paymentDay: form.scheduled ? (Number(form.paymentDay) || null) : null,
+      kind: form.kind,
+    })
     try {
-      await apiFetch('/api/debts', { method: 'POST', body: JSON.stringify({
-        name: form.name,
-        totalAmount: Number(form.totalAmount),
-        lent: form.lent,
-        dueDate: form.dueDate || null,
-        monthlyPayment: form.scheduled ? (Number(form.monthlyPayment) || null) : null,
-        paymentDay: form.scheduled ? (Number(form.paymentDay) || null) : null,
-      }) })
-      setShowForm(false)
-      setForm({ name: '', totalAmount: '', lent: false, dueDate: '', scheduled: false, monthlyPayment: '', paymentDay: '1' })
+      if (editId) await apiFetch(`/api/debts/${editId}`, { method: 'PUT', body })
+      else        await apiFetch('/api/debts', { method: 'POST', body })
+      closeForm()
+      loadDebts()
+    } catch (e) { setError(e.message) }
+  }
+
+  function closeForm() {
+    setShowForm(false); setEditId(null); setForm(BLANK_FORM)
+  }
+
+  /** Open the form pre-filled so a debt can be corrected. */
+  function startEdit(d) {
+    setEditId(d.id)
+    setForm({
+      name: d.name,
+      totalAmount: String(d.totalAmount),
+      lent: d.lent,
+      dueDate: d.dueDate || '',
+      scheduled: !!d.monthlyPayment,
+      monthlyPayment: d.monthlyPayment ? String(d.monthlyPayment) : '',
+      paymentDay: d.paymentDay ? String(d.paymentDay) : '1',
+      kind: d.kind || 'OTHER',
+    })
+    setShowForm(true)
+  }
+
+  /** Undo a payment that was entered by mistake. */
+  async function unpay(id, amount) {
+    if (!amount || amount <= 0) return
+    try {
+      await apiFetch(`/api/debts/${id}/unpay`, { method: 'POST', body: JSON.stringify({ amount: Number(amount) }) })
       loadDebts()
     } catch (e) { setError(e.message) }
   }
@@ -232,7 +269,7 @@ export default function DebtsPage() {
 
         {showForm && (
           <div style={s.card}>
-            <h3 style={s.cardTitle}>{tr('debts.newDebt')}</h3>
+            <h3 style={s.cardTitle}>{editId ? tr('debts.editDebt') : tr('debts.newDebt')}</h3>
             <form onSubmit={addDebt} style={s.formCol}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" style={dirTab(!form.lent)} onClick={() => setForm(f => ({ ...f, lent: false }))}>{tr('debts.iOweIt')}</button>
@@ -242,6 +279,16 @@ export default function DebtsPage() {
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               <input style={s.input} type="number" min="0.01" step="0.01" placeholder={tr('debts.total')} required value={form.totalAmount}
                 onChange={e => setForm(f => ({ ...f, totalAmount: e.target.value }))} />
+
+              {!form.lent && (
+                <>
+                  <label style={s.fieldLabel}>{tr('debts.kind')}</label>
+                  <select style={s.input} value={form.kind}
+                    onChange={e => setForm(f => ({ ...f, kind: e.target.value }))}>
+                    {DEBT_KINDS.map(k => <option key={k} value={k}>{tr(`dkind.${k}`)}</option>)}
+                  </select>
+                </>
+              )}
 
               <label style={s.fieldLabel}>{tr('debts.dueDate')}</label>
               <input style={s.input} type="date" value={form.dueDate}
@@ -262,8 +309,8 @@ export default function DebtsPage() {
               )}
 
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="submit" style={s.btnPrimary}>{tr('common.add')}</button>
-                <button type="button" style={s.btnSecondary} onClick={() => setShowForm(false)}>{tr('common.cancel')}</button>
+                <button type="submit" style={s.btnPrimary}>{editId ? tr('common.save') : tr('common.add')}</button>
+                <button type="button" style={s.btnSecondary} onClick={closeForm}>{tr('common.cancel')}</button>
               </div>
             </form>
           </div>
@@ -288,11 +335,15 @@ export default function DebtsPage() {
                   <span style={{ ...s.pill, ...(d.lent ? badge.green : badge.amber), flexShrink: 0 }}>
                     {d.lent ? tr('debts.lentTag') : tr('debts.oweTag')}
                   </span>
+                  {!d.lent && d.kind && d.kind !== 'OTHER' && (
+                    <span style={{ ...s.pill, ...badge.blue, flexShrink: 0 }}>{tr(`dkind.${d.kind}`)}</span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {d.paidOff
                     ? <span style={{ ...s.pill, ...badge.green }}>{d.lent ? tr('debts.settled') : tr('debts.paidOff')}</span>
                     : <button style={s.btnSmall} onClick={() => { setPayingId(payingId === d.id ? null : d.id); setPayAmount('') }}>{d.lent ? tr('debts.received') : tr('debts.pay')}</button>}
+                  <button style={s.btnSmall} onClick={() => startEdit(d)} title={tr('common.edit')}><Ico e="✏️" size={13} /></button>
                   <button style={s.deleteBtn} onClick={() => deleteDebt(d.id)}><Ico e="✕" size={13} /></button>
                 </div>
               </div>
@@ -329,6 +380,10 @@ export default function DebtsPage() {
                     placeholder={tr('debts.payPlaceholder')} value={payAmount}
                     onChange={e => setPayAmount(e.target.value)} />
                   <button style={s.btnPrimary} onClick={() => pay(d.id)}>{d.lent ? tr('debts.received') : tr('debts.pay')}</button>
+                  {Number(d.paidAmount) > 0 && (
+                    <button style={s.btnSecondary} onClick={() => unpay(d.id, payAmount)}
+                      title={tr('debts.undoHint')}>{tr('debts.undo')}</button>
+                  )}
                 </div>
               )}
                   </div>
