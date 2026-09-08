@@ -64,6 +64,8 @@ export default function SavingsPage() {
   }
 
   const totalSaved = goals.reduce((sum, g) => sum + Number(g.savedAmount), 0)
+  // Money set aside = budget savings lines + deposits into goals
+  const savingsBalance = Number(budgetSavings) + totalSaved
 
   return (
     <PageShell>
@@ -79,7 +81,7 @@ export default function SavingsPage() {
         <div style={s.accountCard}>
           <div style={s.acctCol}>
             <span style={s.acctLabel}>{tr('savings.balance')}</span>
-            <span style={s.acctValue}>{fmt(budgetSavings)}</span>
+            <span style={s.acctValue}>{fmt(savingsBalance)}</span>
           </div>
           <div style={s.acctCol}>
             <span style={s.acctLabel}>{tr('savings.takenOut')}</span>
@@ -87,7 +89,7 @@ export default function SavingsPage() {
           </div>
           <div style={s.acctCol}>
             <span style={s.acctLabel}>{tr('savings.available')}</span>
-            <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(budgetSavings)}</span>
+            <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(savingsBalance)}</span>
           </div>
         </div>
 

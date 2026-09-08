@@ -64,6 +64,8 @@ export default function BudgetPage() {
 
   // Income form
   const [showIncomeForm, setShowIncomeForm] = useState(false)
+  const [showTpl, setShowTpl]     = useState(false)
+  const [tplIncome, setTplIncome] = useState('')
   const [incomeForm, setIncomeForm]         = useState({ description: 'Salary', amount: '' })
 
   // Expense form
@@ -146,6 +148,19 @@ export default function BudgetPage() {
   async function deleteLine(lineId) {
     try { await apiFetch(`/api/budget/lines/${lineId}`, { method: 'DELETE' }); loadBudget() }
     catch (e) { setError(e.message) }
+  }
+
+  async function applyBudgetTemplate(name) {
+    const income = Number(tplIncome)
+    if (!income || income <= 0) { setError(tr('budget.tpl.needIncome')); return }
+    if (!window.confirm(tr('budget.tpl.confirm'))) return
+    try {
+      await apiFetch(`/api/budget/${yearMonth}/apply-template`, {
+        method: 'POST',
+        body: JSON.stringify({ template: name, monthlyIncome: income }),
+      })
+      setShowTpl(false); setTplIncome(''); loadBudget()
+    } catch (e) { setError(e.message) }
   }
 
   // Premium: export this month's income + expense lines to CSV.
@@ -296,6 +311,33 @@ export default function BudgetPage() {
                     </div>
                   </div>
                 )}
+
+                {/* ── BUDGET TEMPLATES ── */}
+                <div style={s.card}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showTpl ? 12 : 0 }}>
+                    <div>
+                      <h2 style={s.cardTitle}>{tr('budget.tpl.title')}</h2>
+                      <p style={{ fontSize: 12, color: t.navyLight, margin: '3px 0 0' }}>{tr('budget.tpl.subtitle')}</p>
+                    </div>
+                    <button style={s.btnSmall} onClick={() => { setTplIncome(tplIncome || (totalIncome ? String(totalIncome) : '')); setShowTpl(v => !v) }}>
+                      {showTpl ? <Ico e="✕" size={14} /> : tr('budget.tpl.open')}
+                    </button>
+                  </div>
+                  {showTpl && (
+                    <div>
+                      <div style={{ ...s.inlineForm, marginBottom: 10 }}>
+                        <input style={{ ...s.input, flex: 1, minWidth: 120 }} type="number" min="0.01" step="0.01"
+                          placeholder={tr('budget.tpl.income')} value={tplIncome}
+                          onChange={e => setTplIncome(e.target.value)} />
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button style={s.btnPrimary} onClick={() => applyBudgetTemplate('FIFTY_THIRTY_TWENTY')}>50 / 30 / 20</button>
+                        <button style={s.btnSecondary} onClick={() => applyBudgetTemplate('PAY_YOURSELF_FIRST')}>{tr('budget.tpl.payYourself')}</button>
+                      </div>
+                      <p style={{ ...s.muted, marginTop: 8 }}>{tr('budget.tpl.note')}</p>
+                    </div>
+                  )}
+                </div>
 
                 {/* ── INCOME SECTION ── */}
                 <div style={s.card}>

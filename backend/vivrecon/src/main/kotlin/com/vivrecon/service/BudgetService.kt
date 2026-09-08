@@ -5,6 +5,8 @@ import com.vivrecon.dto.*
 import com.vivrecon.repo.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 @Service
 class BudgetService(
@@ -70,6 +72,55 @@ class BudgetService(
         lineRepo.delete(line)
         recalcTotals(budget)
     }
+
+    @Transactional
+    fun applyTemplate(userId: Long, yearMonth: String, req: ApplyBudgetTemplateRequest): BudgetResponse {
+        val buckets = TEMPLATES[req.template]
+            ?: throw IllegalArgumentException("Unknown budget template: ${req.template}")
+        val user = userRepo.findById(userId).orElseThrow { NoSuchElementException("User not found") }
+        val budget = budgetRepo.findByUserIdAndYearMonth(userId, yearMonth).orElseGet {
+            budgetRepo.save(BudgetEntity(user = user, yearMonth = yearMonth))
+        }
+        // A template defines the whole month, so replace any existing lines.
+        lineRepo.deleteAll(lineRepo.findAllByBudgetId(budget.id))
+
+        val income = req.monthlyIncome.setScale(2, RoundingMode.HALF_UP)
+        lineRepo.save(
+            BudgetLineEntity(
+                budget = budget, type = BudgetLineType.INCOME, category = null,
+                description = "Monthly income", amount = income
+            )
+        )
+        var allocated = BigDecimal.ZERO
+        buckets.forEachIndexed { i, b ->
+            val amount = if (i == buckets.lastIndex)
+                (income - allocated).setScale(2, RoundingMode.HALF_UP)
+            else
+                income.multiply(BigDecimal(b.pct)).divide(BigDecimal(100)).setScale(2, RoundingMode.HALF_UP)
+            allocated = allocated.add(amount)
+            lineRepo.save(
+                BudgetLineEntity(
+                    budget = budget, type = BudgetLineType.EXPENSE, category = b.category,
+                    description = b.label, amount = amount
+                )
+            )
+        }
+        recalcTotals(budget)
+        return budget.toDto()
+    }
+
+    private data class TemplateBucket(val label: String, val category: ExpenseCategory, val pct: Int)
+    private val TEMPLATES = mapOf(
+        "FIFTY_THIRTY_TWENTY" to listOf(
+            TemplateBucket("Needs (50%)", ExpenseCategory.OTHER, 50),
+            TemplateBucket("Wants (30%)", ExpenseCategory.ENTERTAINMENT, 30),
+            TemplateBucket("Savings (20%)", ExpenseCategory.SAVINGS, 20),
+        ),
+        "PAY_YOURSELF_FIRST" to listOf(
+            TemplateBucket("Savings (20%)", ExpenseCategory.SAVINGS, 20),
+            TemplateBucket("Living (80%)", ExpenseCategory.OTHER, 80),
+        ),
+    )
 
     // ── private helpers ───────────────────────────────────────────────────────
 
