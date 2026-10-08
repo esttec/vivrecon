@@ -33,10 +33,13 @@ export default function PremiumPage() {
 
   // Handle the redirect back from Stripe Checkout.
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get('checkout')
+    const q = new URLSearchParams(window.location.search)
+    const p = q.get('checkout')
     if (p === 'success') {
-      // Payment done — refresh the user, then leave the sales page for good.
-      Promise.resolve(refreshUser()).finally(() => navigate('/budget', { replace: true }))
+      // Payment done — confirm with the backend (don't wait for the webhook), refresh, leave the sales page.
+      const sid = q.get('session_id')
+      const confirm = sid ? apiFetch('/api/billing/confirm', { method: 'POST', body: JSON.stringify({ sessionId: sid }) }).catch(() => {}) : Promise.resolve()
+      confirm.then(() => refreshUser()).finally(() => navigate('/budget', { replace: true }))
     } else if (p === 'cancel') {
       setMsg(tr('premium.checkoutCancel'))
       window.history.replaceState({}, '', '/premium')
