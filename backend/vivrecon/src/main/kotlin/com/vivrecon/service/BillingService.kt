@@ -101,7 +101,7 @@ class BillingService(
 
         when (event.type) {
             "checkout.session.completed" -> {
-                val session = event.dataObjectDeserializer.getObject().orElse(null) as? Session ?: return false
+                val session = eventObject(event) as? Session ?: return false
                 val subId = session.subscription ?: return false
                 val sub = Subscription.retrieve(subId)
                 applySubscription(sub)
@@ -111,7 +111,7 @@ class BillingService(
                 applySubscription(sub)
             }
             "customer.subscription.deleted" -> {
-                val sub = event.dataObjectDeserializer.getObject().orElse(null) as? Subscription ?: return false
+                val sub = resolveSubscription(event) ?: return false
                 // Access remains until the end of the paid period, then lapses.
                 applySubscription(sub)
             }
@@ -120,10 +120,16 @@ class BillingService(
         return true
     }
 
+    // stripe-java 24 is pinned to API 2023-10-16; events sent with a newer account
+    // API version make getObject() empty, so fall back to unsafe deserialization.
+    private fun eventObject(event: com.stripe.model.Event): Any? =
+        event.dataObjectDeserializer.getObject().orElseGet { event.dataObjectDeserializer.deserializeUnsafe() }
+
     private fun resolveSubscription(event: com.stripe.model.Event): Subscription? {
-        val obj = event.dataObjectDeserializer.getObject().orElse(null)
+        val obj = eventObject(event)
         return when (obj) {
-            is Subscription -> obj
+            // Re-fetch with the SDK's API version: newer event payloads lack current_period_end.
+            is Subscription -> Subscription.retrieve(obj.id)
             is com.stripe.model.Invoice -> obj.subscription?.let { Subscription.retrieve(it) }
             else -> null
         }
