@@ -177,12 +177,15 @@ class TransactionService(
 
         // Refunds: a card refund carries the shop name and the exact amount of an earlier purchase.
         // Pair them (also across months/imports) so neither inflates the budget.
+        // Works in either import order: a new refund can match an old purchase and vice versa.
         val openExpenses = (saved + existing).filter { it.amount.signum() < 0 && !it.refunded }.toMutableList()
-        for (r in saved.filter { it.amount.signum() > 0 }.sortedBy { it.txDate }) {
+        val openCredits = (saved + existing).filter { it.amount.signum() > 0 && !it.refunded }
+        for (r in openCredits.sortedBy { it.txDate }) {
             val match = openExpenses
                 .filter { it.amount.negate().compareTo(r.amount) == 0 && !it.txDate.isAfter(r.txDate) }
                 .filter { it.description.length >= 3 && r.description.contains(it.description, ignoreCase = true) }
                 .maxByOrNull { it.txDate } ?: continue
+            if (r !in saved && match !in saved) continue // pair of two old rows: nothing new to do
             openExpenses.remove(match)
             r.refunded = true; match.refunded = true
             txRepo.save(r); txRepo.save(match)
@@ -195,6 +198,18 @@ class TransactionService(
                         category = match.category ?: ExpenseCategory.OTHER,
                         description = "Refund: ${match.description}".take(255),
                         amount = match.amount // negative → subtracts the original purchase
+                    )
+                )
+            }
+            if (r !in saved) {
+                // Refund was imported earlier and counted as income: cancel it in its month.
+                budgetService.addLine(
+                    userId, r.txDate.toString().take(7),
+                    UpsertBudgetLineRequest(
+                        type = BudgetLineType.INCOME,
+                        category = null,
+                        description = "Refund matched: ${match.description}".take(255),
+                        amount = r.amount.negate()
                     )
                 )
             }
