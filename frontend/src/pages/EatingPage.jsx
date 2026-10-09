@@ -39,13 +39,11 @@ export default function EatingPage() {
   const [scanning, setScanning]     = useState(false)
   const fileRef = useRef(null)
 
-  // Weekly food allowance = the actual monthly food budget ÷ ~4.3 weeks.
-  // Uses the food budget the user set (e.g. €200/mo → ~€46/wk); if none is set
-  // yet, falls back to 20% of income.
-  const monthlyIncome = Number(profile?.monthlyIncome || 0)
-  const monthlyFood   = Number(profile?.foodBudget) > 0
-    ? Number(profile.foodBudget)
-    : (monthlyIncome > 0 ? monthlyIncome * 0.20 : 0)
+  // Food budget = 15 % of this month's income (from the budget; profile income as fallback).
+  // Weekly allowance = that ÷ ~4.3 weeks.
+  const [monthIncome, setMonthIncome] = useState(0)
+  const monthlyIncome = monthIncome || Number(profile?.monthlyIncome || 0)
+  const monthlyFood   = monthlyIncome > 0 ? monthlyIncome * 0.15 : 0
   const weeklyFood    = monthlyFood > 0 ? Math.round(monthlyFood / 4.345) : null
   const [tab, setTab]             = useState('plans')
   const [mealPlans, setMealPlans] = useState([])
@@ -62,10 +60,12 @@ export default function EatingPage() {
   async function loadAll() {
     setLoading(true)
     try {
-      const [plans, pantryItems] = await Promise.all([
+      const [plans, pantryItems, budget] = await Promise.all([
         apiFetch('/api/eating/meal-plans'),
         apiFetch('/api/eating/pantry'),
+        apiFetch(`/api/budget/${new Date().toISOString().slice(0, 7)}`).catch(() => null),
       ])
+      setMonthIncome(Number(budget?.totalIncome || 0))
       setMealPlans(plans)
       setPantry(pantryItems)
     } catch (e) {
@@ -225,7 +225,7 @@ export default function EatingPage() {
 
         {error && <p style={s.error}>{error}</p>}
         {loading && <p style={s.muted}>{tr('common.loading')}</p>}
-        <BudgetLinesCard category="EATING" />
+        <BudgetLinesCard category="EATING" plannedPct={15} />
 
         {/* ── MEAL PLANS ── */}
         {tab === 'plans' && !loading && (

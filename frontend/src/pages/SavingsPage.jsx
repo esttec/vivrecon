@@ -13,7 +13,8 @@ export default function SavingsPage() {
   const { t: tr } = useT()
 
   const [goals, setGoals]     = useState([])
-  const [budgetSavings, setBudgetSavings] = useState(0) // total marked as Savings in the budget
+  const [budgetSavings, setBudgetSavings] = useState(0) // cash set aside in the budget (Savings lines)
+  const [invested, setInvested] = useState(0)           // Savings lines that went to a broker (Plus500, eToro…)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -32,11 +33,11 @@ export default function SavingsPage() {
       ])
       setGoals(g || [])
       // Everything marked as "Savings" across all budget months = money set aside.
-      const saved = (budgets || []).reduce((sum, b) =>
-        sum + (b.expenseLines || [])
-          .filter(l => l.category === 'SAVINGS')
-          .reduce((s, l) => s + Number(l.amount), 0), 0)
-      setBudgetSavings(saved)
+      // Broker payments are investments, not cash you can spend — keep them apart.
+      const isBroker = d => /plus500|pluss500|etoro|lightyear|trading ?212|interactive brokers|ibkr|degiro|xtb|freedom finance|bondora|mintos/i.test(d || '')
+      const lines = (budgets || []).flatMap(b => (b.expenseLines || []).filter(l => l.category === 'SAVINGS'))
+      setInvested(lines.filter(l => isBroker(l.description)).reduce((s, l) => s + Number(l.amount), 0))
+      setBudgetSavings(lines.filter(l => !isBroker(l.description)).reduce((s, l) => s + Number(l.amount), 0))
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -84,8 +85,8 @@ export default function SavingsPage() {
             <span style={s.acctValue}>{fmt(savingsBalance)}</span>
           </div>
           <div style={s.acctCol}>
-            <span style={s.acctLabel}>{tr('savings.takenOut')}</span>
-            <span style={{ ...s.acctValue, color: '#9b2020' }}>{fmt(0)}</span>
+            <span style={s.acctLabel}>{tr('savings.invested')}</span>
+            <span style={{ ...s.acctValue, color: '#2a4d8f' }}>{fmt(invested)}</span>
           </div>
           <div style={s.acctCol}>
             <span style={s.acctLabel}>{tr('savings.available')}</span>

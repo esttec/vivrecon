@@ -28,7 +28,6 @@ export default function HousePage() {
   const { t: tr } = useT()
   const [yearMonth, setYearMonth] = useState(thisMonth())
   const [expenses, setExpenses]   = useState([])
-  const [houseBudget, setHouseBudget] = useState(0) // amount marked as House in the budget
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
   const [showForm, setShowForm]   = useState(false)
@@ -56,16 +55,7 @@ export default function HousePage() {
     setLoading(true)
     setError('')
     try {
-      const [data, budget] = await Promise.all([
-        apiFetch(`/api/house/${yearMonth}`),
-        apiFetch(`/api/budget/${yearMonth}`),
-      ])
-      setExpenses(data)
-      // What was marked for House in the budget this month.
-      const marked = (budget?.expenseLines || [])
-        .filter(l => l.category === 'HOUSE')
-        .reduce((s, l) => s + Number(l.amount), 0)
-      setHouseBudget(marked)
+      setExpenses(await apiFetch(`/api/house/${yearMonth}`))
     } catch (e) {
       setError(e.message)
     } finally {
@@ -116,22 +106,7 @@ export default function HousePage() {
           </div>
         </div>
 
-        <BudgetLinesCard category="HOUSE" yearMonth={yearMonth} />
-        {/* Budget vs actual for House — pulled from the budget page */}
-        <div style={s.accountCard}>
-          <div style={s.acctCol}>
-            <span style={s.acctLabel}>{tr('eating.budget')}</span>
-            <span style={s.acctValue}>{fmt(houseBudget)}</span>
-          </div>
-          <div style={s.acctCol}>
-            <span style={s.acctLabel}>{tr('budget.spent')}</span>
-            <span style={{ ...s.acctValue, color: '#9b2020' }}>{fmt(total)}</span>
-          </div>
-          <div style={s.acctCol}>
-            <span style={s.acctLabel}>{tr('savings.available')}</span>
-            <span style={{ ...s.acctValue, color: (houseBudget - total) >= 0 ? '#1e6b3a' : '#c0392b' }}>{fmt(houseBudget - total)}</span>
-          </div>
-        </div>
+        <BudgetLinesCard category="HOUSE" yearMonth={yearMonth} planned={Number(profile?.rentBudget || 0)} extraSpent={total} />
 
         {error && <p style={s.error}>{error}</p>}
 

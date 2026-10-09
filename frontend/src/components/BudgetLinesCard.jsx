@@ -3,32 +3,55 @@ import { apiFetch } from '../api/client'
 import { useUser } from '../context/UserContext'
 import { useT } from '../i18n'
 
-// Lists this month's budget lines (manual + bank import) filed under one category,
-// so moving a line on the Budget page also shows it on that category's page.
-export default function BudgetLinesCard({ category, yearMonth }) {
+// One card per category page, always in the same order:
+//   1. Eelarve   – what the month allows for this category
+//   2. Kulutatud – every budget line in this category (bank imports + manual), plus the page's own extra spending
+//   3. Saadaval  – Eelarve − Kulutatud
+// planned:     fixed amount (e.g. rent from the profile), or
+// plannedPct:  share of this month's income (food = 15 %)
+export default function BudgetLinesCard({ category, yearMonth, planned, plannedPct, extraSpent = 0, onSpent }) {
   const { fmt } = useUser()
   const { t: tr } = useT()
   const [lines, setLines] = useState([])
+  const [income, setIncome] = useState(0)
   const ym = yearMonth || new Date().toISOString().slice(0, 7)
 
   useEffect(() => {
     apiFetch(`/api/budget/${ym}`)
-      .then(b => setLines((b?.expenseLines || []).filter(l => l.category === category)))
-      .catch(() => setLines([]))
+      .then(b => {
+        setLines((b?.expenseLines || []).filter(l => l.category === category))
+        setIncome(Number(b?.totalIncome || 0))
+      })
+      .catch(() => { setLines([]); setIncome(0) })
   }, [category, ym])
 
-  if (!lines.length) return null
-  const total = lines.reduce((s, l) => s + Number(l.amount), 0)
+  const spent = lines.reduce((s, l) => s + Number(l.amount), 0) + Number(extraSpent || 0)
+  useEffect(() => { onSpent?.(spent) }, [spent])
+  const budget = plannedPct ? Math.round(income * plannedPct) / 100 : Number(planned || 0)
+  if (!lines.length && !budget && !extraSpent) return null
+  const left = budget - spent
+
+  const row = { display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', borderTop: '1px solid #f0f0ec' }
   return (
     <div style={{ background: '#fff', border: '1px solid #e6e6e0', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
-        <span>{tr('nav.budget')}</span><span>{fmt(total)}</span>
+      {budget > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 15, paddingBottom: 6 }}>
+          <span>{tr('eating.budget')}{plannedPct ? ` (${plannedPct}%)` : ''}</span><span>{fmt(budget)}</span>
+        </div>
+      )}
+      <div style={{ ...row, fontWeight: 700, color: '#9b2020' }}>
+        <span>{tr('budget.spent')}</span><span>{fmt(spent)}</span>
       </div>
       {lines.map(l => (
-        <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0', borderTop: '1px solid #f0f0ec' }}>
+        <div key={l.id} style={{ ...row, paddingLeft: 12 }}>
           <span>{l.description}</span><span style={{ fontWeight: 600 }}>{fmt(l.amount)}</span>
         </div>
       ))}
+      {budget > 0 && (
+        <div style={{ ...row, fontWeight: 700, fontSize: 15, color: left >= 0 ? '#1e6b3a' : '#c0392b' }}>
+          <span>{tr('savings.available')}</span><span>{fmt(left)}</span>
+        </div>
+      )}
     </div>
   )
 }

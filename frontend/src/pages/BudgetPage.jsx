@@ -14,7 +14,7 @@ import { t, badge } from '../theme'
 // `labelKey` resolves to a translated label at render time.
 const EXPENSE_CATEGORIES = [
   { key: 'HOUSE',        labelKey: 'cat.house',         icon: '🏠', profileField: 'rentBudget'        },
-  { key: 'EATING',       labelKey: 'cat.food',          icon: '🍎', profileField: 'foodBudget'        },
+  { key: 'EATING',       labelKey: 'cat.food',          icon: '🍎', profileField: '_food15'           },
   { key: 'RESTAURANTS',  labelKey: 'cat.restaurants',   icon: '🍽️', profileField: null               },
   { key: 'TRANSPORT',    labelKey: 'cat.transport',     icon: '🚗', profileField: 'transportBudget'   },
   { key: 'CLOTHES',      labelKey: 'cat.clothing',      icon: '👗', profileField: null               },
@@ -197,6 +197,31 @@ export default function BudgetPage() {
     )
   }
 
+  // The user types today's real bank balance; we put the difference into one "Algsaldo" income
+  // line in the earliest month, so every month's carried balance lines up with the bank.
+  async function setRealBalance() {
+    const raw = window.prompt(tr('budget.realBalancePrompt'), available.toFixed(2))
+    if (raw == null) return
+    const target = Number(String(raw).replace(',', '.'))
+    if (!isFinite(target)) return
+    const delta = Math.round((target - available) * 100) / 100
+    if (!delta) return
+    try {
+      const all = (await apiFetch('/api/budget')) || []
+      const first = all.map(b => b.yearMonth).sort()[0] || yearMonth
+      const firstBudget = all.find(b => b.yearMonth === first)
+      const opening = (firstBudget?.incomeLines || []).find(l => l.description === 'Algsaldo')
+      if (opening) {
+        await apiFetch(`/api/budget/lines/${opening.id}`, { method: 'PUT',
+          body: JSON.stringify({ type: 'INCOME', description: 'Algsaldo', amount: Number(opening.amount) + delta }) })
+      } else {
+        await apiFetch(`/api/budget/${first}/lines`, { method: 'POST',
+          body: JSON.stringify({ type: 'INCOME', description: 'Algsaldo', amount: delta }) })
+      }
+      loadBudget()
+    } catch (e) { setError(e.message) }
+  }
+
   // ── Derived numbers ──────────────────────────────────────────────────────
   const totalIncome   = budget ? Number(budget.totalIncome)   : 0
   const totalExpenses = budget ? Number(budget.totalExpenses) : 0
@@ -207,6 +232,7 @@ export default function BudgetPage() {
   // Planned amounts from profile (reference only)
   const savingsPct = Number(profile?.savingsTargetPercent ?? 0)
   function plannedFor(cat) {
+    if (cat.profileField === '_food15') return totalIncome > 0 ? Math.round(totalIncome * 15) / 100 : 0 // food = 15 % of income, same as the Food page
     if (cat.profileField === '_savings') return totalIncome > 0 && savingsPct > 0 ? totalIncome * savingsPct / 100 : 0
     if (!cat.profileField) return 0
     return Number(profile?.[cat.profileField] ?? 0)
@@ -298,6 +324,12 @@ export default function BudgetPage() {
                     sub={carry ? tr('budget.carried', { amount: fmt(carry) }) : (totalIncome > 0 ? (balance >= 0 ? tr('budget.onTrack') : tr('budget.overBudget')) : null)}
                     bg={available >= 0 ? badge.blue : badge.red} fullWidth={isMobile} />
                 </div>
+                {yearMonth === thisMonth() && (
+                  <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 12 }}>
+                    <button style={{ background: 'none', border: 'none', color: t.navyMid, fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={setRealBalance}>{tr('budget.setRealBalance')}</button>
+                  </div>
+                )}
 
                 {/* Spending bar */}
                 {totalIncome > 0 && (
