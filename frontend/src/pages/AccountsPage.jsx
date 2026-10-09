@@ -30,6 +30,7 @@ export default function AccountsPage() {
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
   const [txs, setTxs]           = useState([])
+  const [budgets, setBudgets]   = useState([])
   const fileRef = useRef(null)
 
   async function handleImport(e) {
@@ -56,8 +57,10 @@ export default function AccountsPage() {
   async function load() {
     setLoading(true); setError('')
     try {
-      const [accs, recent] = await Promise.all([apiFetch('/api/accounts'), apiFetch('/api/transactions?limit=50')])
-      setAccounts(accs || []); setTxs(recent || [])
+      const [accs, recent, all] = await Promise.all([
+        apiFetch('/api/accounts'), apiFetch('/api/transactions?limit=50'), apiFetch('/api/budget'),
+      ])
+      setAccounts(accs || []); setTxs(recent || []); setBudgets(all || [])
     }
     catch (e) { setError(e.message) }
     finally { setLoading(false) }
@@ -79,8 +82,15 @@ export default function AccountsPage() {
     catch (e) { setError(e.message) }
   }
 
-  const netWorth = accounts.reduce((s, a) => s + Number(a.balance), 0)
   const month = new Date().toISOString().slice(0, 7)
+  // Money flow from the budget: what was left over before this month, and this month so far.
+  const net = b => Number(b.totalIncome ?? 0) - Number(b.totalExpenses ?? 0)
+  const fromBefore = budgets.filter(b => b.yearMonth < month).reduce((s, b) => s + net(b), 0)
+  const cur = budgets.find(b => b.yearMonth === month)
+  const inThisMonth = Number(cur?.totalIncome ?? 0), outThisMonth = Number(cur?.totalExpenses ?? 0)
+  const onAccount = fromBefore + inThisMonth - outThisMonth
+  // Without accounts entered by hand, the budget's running balance is the best "money on account" figure.
+  const netWorth = accounts.length ? accounts.reduce((s, a) => s + Number(a.balance), 0) : onAccount
   const spentThisMonth = txs.filter(x => x.date.startsWith(month) && Number(x.amount) < 0 && !x.refunded)
     .reduce((s, x) => s - Number(x.amount), 0)
   const iconFor = key => (TYPES.find(x => x.key === key)?.icon ?? '💼')
@@ -123,6 +133,23 @@ export default function AccountsPage() {
               <span style={{ color: badge.blue.color, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tr('accounts.netWorth')}</span>
               <span style={{ color: badge.blue.color, fontSize: 28, fontWeight: 800 }}>{fmt(netWorth)}</span>
             </div>
+
+            {budgets.length > 0 && (
+              <div style={s.card}>
+                {[
+                  [tr('accounts.fromBefore'), fromBefore, t.navy],
+                  [tr('accounts.inThisMonth'), inThisMonth, '#1e6b3a'],
+                  [tr('accounts.outThisMonth'), -outThisMonth, '#c0392b'],
+                ].map(([label, v, color]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                    <span style={{ color: t.navyLight }}>{label}</span><span style={{ fontWeight: 600, color }}>{fmt(v)}</span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 800, color: t.navy, borderTop: `1px solid ${t.border}`, marginTop: 6, paddingTop: 8 }}>
+                  <span>{tr('accounts.onAccount')}</span><span>{fmt(onAccount)}</span>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={addAccount} style={s.card}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>

@@ -131,6 +131,9 @@ export default function EatingPage() {
   function addItem()      { setDraft(d => [...d, { name: '', qty: '', price: '', per: 1 }]) }
   function removeItem(idx) { setDraft(d => d.filter((_, i) => i !== idx)) }
 
+  // Only this week's (and future) plans; past weeks drop off so each week starts fresh.
+  const currentPlans = mealPlans.filter(p => p.weekStartDate >= mondayOfThisWeek())
+
   // Weekly cost of an item = its price spread over how many weeks it lasts.
   const itemWeeklyCost = it => (Number(it.price) || 0) / (Number(it.per) || 1)
   const basketTotal = (draft || []).reduce((sum, it) => sum + itemWeeklyCost(it), 0)
@@ -311,9 +314,9 @@ export default function EatingPage() {
               </div>
             )}
 
-            {mealPlans.length === 0 && <div style={s.empty}>{tr('eating.noPlans')}</div>}
+            {currentPlans.length === 0 && <div style={s.empty}>{tr('eating.noPlans')}</div>}
 
-            {mealPlans.map(plan => (
+            {currentPlans.map(plan => (
               <div key={plan.id} style={s.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
                   <h2 style={s.cardTitle}>{tr('eating.weekOf', { date: plan.weekStartDate })}</h2>

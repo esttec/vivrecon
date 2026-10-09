@@ -187,7 +187,7 @@ class TransactionService(
                 .filter { it.amount.negate().compareTo(r.amount) == 0 && !it.txDate.isAfter(r.txDate) }
                 .filter { it.description.length >= 3 && r.description.contains(it.description, ignoreCase = true) }
                 .maxByOrNull { it.txDate } ?: continue
-            if (r !in saved && match !in saved) continue // pair of two old rows: nothing new to do
+            // Two old rows (imported before pairing existed) are paired too: both get a cancelling line below.
             openExpenses.remove(match)
             r.refunded = true; match.refunded = true
             txRepo.save(r); txRepo.save(match)

@@ -18,6 +18,7 @@ const STATUS_BADGE = { NEEDED: badge.amber, FOUND: badge.blue, PURCHASED: badge.
 export default function ClothingPage() {
   const isMobile = useIsMobile()
   const { fmt } = useUser()
+  const [bought, setBought] = useState([])
   const { t: tr } = useT()
   const [yearMonth, setYearMonth] = useState(thisMonth())
   const [items, setItems]         = useState([])
@@ -46,7 +47,11 @@ export default function ClothingPage() {
 
   async function loadItems() {
     setLoading(true); setError('')
-    try { setItems(await apiFetch(`/api/clothes?yearMonth=${yearMonth}`)) }
+    try {
+      const [list, budget] = await Promise.all([apiFetch(`/api/clothes?yearMonth=${yearMonth}`), apiFetch(`/api/budget/${yearMonth}`)])
+      setItems(list)
+      setBought((budget?.expenseLines || []).filter(l => l.category === 'CLOTHES'))
+    }
     catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -69,6 +74,9 @@ export default function ClothingPage() {
     catch (e) { setError(e.message) }
   }
 
+  // Bank-imported clothing purchases count as bought: "HUMANA (3)" = 3 purchases.
+  const boughtCount = bought.reduce((n, l) => n + Number((/\((\d+)\)$/.exec(l.description) || [0, 1])[1]), 0)
+  const boughtSum = bought.reduce((sum, l) => sum + Number(l.amount), 0)
   const grouped = STATUSES.reduce((acc, st) => { acc[st] = items.filter(i => i.status === st); return acc }, {})
 
   return (
@@ -93,7 +101,12 @@ export default function ClothingPage() {
           {STATUSES.map(status => (
             <div key={status} style={{ ...s.statCard, background: STATUS_BADGE[status].bg }}>
               <span style={{ color: STATUS_BADGE[status].color, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tr('cstatus.' + status)}</span>
-              <span style={{ color: STATUS_BADGE[status].color, fontSize: 28, fontWeight: 700 }}>{grouped[status].length}</span>
+              <span style={{ color: STATUS_BADGE[status].color, fontSize: 28, fontWeight: 700 }}>
+                {grouped[status].length + (status === 'PURCHASED' ? boughtCount : 0)}
+              </span>
+              {status === 'PURCHASED' && boughtSum > 0 && (
+                <span style={{ color: STATUS_BADGE[status].color, fontSize: 13, fontWeight: 600 }}>{fmt(boughtSum)}</span>
+              )}
             </div>
           ))}
         </div>
@@ -177,7 +190,7 @@ const s = {
   titleRow:    { display: 'flex', justifyContent: 'space-between', marginBottom: 20 },
   title:       { fontSize: 24, fontWeight: 700, color: t.navy, margin: 0 },
   monthPicker: { padding: '8px 12px', border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 14, color: t.navy, background: '#fff' },
-  statCard:    { borderRadius: 12, padding: '14px 18px' },
+  statCard:    { borderRadius: 12, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 4 },
   card:        { background: '#fff', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, marginBottom: 16 },
   cardTitle:   { fontSize: 13, fontWeight: 600, color: t.navyLight, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 12px' },
   label:       { display: 'block', fontSize: 12, color: t.navyLight, fontWeight: 500, marginBottom: 5 },
