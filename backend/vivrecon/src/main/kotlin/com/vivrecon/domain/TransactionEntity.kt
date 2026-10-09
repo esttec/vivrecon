@@ -31,6 +31,10 @@ data class TransactionEntity(
     @Column(length = 20)
     val category: ExpenseCategory? = null,
 
+    /** True for a purchase and its matching refund; both are left out of the budget. */
+    @Column(nullable = false)
+    var refunded: Boolean = false,
+
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now()
 )

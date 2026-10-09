@@ -88,7 +88,9 @@ export default function BudgetPage() {
       if (!rows.length) { setError(tr('import.empty')); return }
       const res = await apiFetch('/api/transactions/import', { method: 'POST', body: JSON.stringify({ items: rows }) })
       setImportMsg(tr('import.done', { count: res.imported, subs: res.subscriptionsDetected }))
-      loadBudget()
+      // Jump to the statement's month; the effect on yearMonth reloads the budget.
+      if (res.lastMonth && res.lastMonth !== yearMonth) setYearMonth(res.lastMonth)
+      else loadBudget()
     } catch (err) {
       setError(err.message || tr('import.empty'))
     } finally { setImporting(false) }

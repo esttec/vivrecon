@@ -65,7 +65,8 @@ data class ImportResult(
     val expenseTotal: BigDecimal,
     val incomeTotal: BigDecimal,
     val byCategory: List<CategoryTotal>,
-    val subscriptionsDetected: Int
+    val subscriptionsDetected: Int,
+    val lastMonth: String? = null   // "yyyy-MM" of the newest imported transaction, so the UI can jump there
 )
 data class CreateSubscriptionRequest(
     val name: String,

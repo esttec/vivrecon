@@ -62,7 +62,8 @@ object TxRules {
         ),
         ExpenseCategory.CLOTHES to listOf(
             "h&m", "hm.com", "zara", "reserved", "bershka", "denim", "clothing", "riided",
-            "moe", "footwear", "kingad", "deichmann", "ecco", "lindex", "monton", "mango"
+            "moe", "footwear", "kingad", "deichmann", "ecco", "lindex", "monton", "mango",
+            "humana", "weekend", "sinsay", "pepco", "kappahl", "abakhan"
         ),
         ExpenseCategory.GADGETS to listOf(
             "euronics", "arvutitark", "klick", "apple store", "electronics", "elektroonika",
@@ -84,11 +85,17 @@ object TxRules {
             "rent", "üür", "eesti energia", "elektrilevi", "imatra", "water", "vesi",
             "gas", "gaas", "korteriühistu", "ühistu", "utilities", "kommunaal",
             "insurance", "kindlustus", "if p&c", "ergo", "salva", "seesam", "swedbank kindlustus",
-            "bauhaus", "k-rauta", "espak", "ehituse abc", "furniture", "mööbel", "ikea"
+            "bauhaus", "k-rauta", "espak", "ehituse abc", "furniture", "mööbel", "ikea",
+            "jysk", "decora", "jysk.ee", "home4you", "sotka", "pets24", "lemmikloom"
         ),
         ExpenseCategory.COMMUNICATION to listOf("apple.com/bill", "google *", "google one", "icloud", "dropbox", "microsoft"),
         ExpenseCategory.WORK to listOf("linkedin", "canva", "adobe", "notion", "openai", "chatgpt", "office 365", "microsoft 365"),
-        ExpenseCategory.GIFTS to listOf("gift", "kingitus", "lilled", "flowers")
+        ExpenseCategory.GIFTS to listOf("gift", "kingitus", "lilled", "flowers"),
+        // Money moved to brokers is investing, not spending; shown under Säästud.
+        ExpenseCategory.SAVINGS to listOf(
+            "plus500", "pluss500", "etoro", "lightyear", "trading 212", "trading212",
+            "interactive brokers", "ibkr", "degiro", "xtb", "freedom finance", "bondora", "mintos"
+        )
     )
 
     fun categorize(desc: String): ExpenseCategory {
@@ -141,9 +148,19 @@ class TransactionService(
     fun import(userId: Long, req: ImportTxRequest): ImportResult {
         val user = userRepo.findById(userId).orElseThrow { NoSuchElementException("User not found") }
 
+        // Skip rows already imported (same date, amount, description) so re-importing a statement
+        // doesn't double the budget. Counted, so two identical purchases on one day both survive.
+        fun key(d: java.time.LocalDate, amt: BigDecimal, desc: String) = "$d|${amt.stripTrailingZeros().toPlainString()}|${desc.take(255)}"
+        val existing = txRepo.findAllByUserIdOrderByTxDateDesc(userId)
+        val already = existing
+            .groupingBy { key(it.txDate, it.amount, it.description) }.eachCount().toMutableMap()
+
         val saved = mutableListOf<TransactionEntity>()
         for (item in req.items) {
             if (item.amount.compareTo(BigDecimal.ZERO) == 0) continue
+            val k = key(TxRules.parseDate(item.date), item.amount, item.description)
+            val left = already[k] ?: 0
+            if (left > 0) { already[k] = left - 1; continue }
             val isExpense = item.amount.signum() < 0
             val category = if (isExpense) TxRules.categorize(item.description) else null
             saved += txRepo.save(
@@ -158,21 +175,61 @@ class TransactionService(
             )
         }
 
-        // Aggregate this batch's expenses by (month, category) → one budget line each.
-        val expenses = saved.filter { it.amount.signum() < 0 }
+        // Refunds: a card refund carries the shop name and the exact amount of an earlier purchase.
+        // Pair them (also across months/imports) so neither inflates the budget.
+        val openExpenses = (saved + existing).filter { it.amount.signum() < 0 && !it.refunded }.toMutableList()
+        for (r in saved.filter { it.amount.signum() > 0 }.sortedBy { it.txDate }) {
+            val match = openExpenses
+                .filter { it.amount.negate().compareTo(r.amount) == 0 && !it.txDate.isAfter(r.txDate) }
+                .filter { it.description.length >= 3 && r.description.contains(it.description, ignoreCase = true) }
+                .maxByOrNull { it.txDate } ?: continue
+            openExpenses.remove(match)
+            r.refunded = true; match.refunded = true
+            txRepo.save(r); txRepo.save(match)
+            if (match !in saved) {
+                // Purchase was imported earlier and is already in that month's budget: cancel it there.
+                budgetService.addLine(
+                    userId, match.txDate.toString().take(7),
+                    UpsertBudgetLineRequest(
+                        type = BudgetLineType.EXPENSE,
+                        category = match.category ?: ExpenseCategory.OTHER,
+                        description = "Refund: ${match.description}".take(255),
+                        amount = match.amount // negative → subtracts the original purchase
+                    )
+                )
+            }
+        }
+
+        // One budget line per (month, category, shop), so the user sees where the money went.
+        val expenses = saved.filter { it.amount.signum() < 0 && !it.refunded }
         val grouped = expenses.groupBy {
-            it.txDate.toString().take(7) to (it.category ?: ExpenseCategory.OTHER)
+            Triple(it.txDate.toString().take(7), it.category ?: ExpenseCategory.OTHER, it.description)
         }
         for ((key, txs) in grouped) {
-            val (ym, cat) = key
+            val (ym, cat, shop) = key
             val sum = txs.fold(BigDecimal.ZERO) { acc, t -> acc + t.amount.abs() }
             budgetService.addLine(
                 userId, ym,
                 UpsertBudgetLineRequest(
                     type = BudgetLineType.EXPENSE,
                     category = cat,
-                    description = "Bank import (${txs.size})",
+                    description = (if (txs.size > 1) "$shop (${txs.size})" else shop).take(255),
                     amount = sum
+                )
+            )
+        }
+
+        // Income: one budget line per (month, payer), e.g. salary from the employer.
+        val incomes = saved.filter { it.amount.signum() > 0 && !it.refunded }
+        for ((key, txs) in incomes.groupBy { it.txDate.toString().take(7) to it.description }) {
+            val (ym, payer) = key
+            budgetService.addLine(
+                userId, ym,
+                UpsertBudgetLineRequest(
+                    type = BudgetLineType.INCOME,
+                    category = null,
+                    description = payer.take(255),
+                    amount = txs.fold(BigDecimal.ZERO) { acc, t -> acc + t.amount }
                 )
             )
         }
@@ -184,14 +241,15 @@ class TransactionService(
             .sortedByDescending { it.amount }
 
         val expenseTotal = expenses.fold(BigDecimal.ZERO) { a, t -> a + t.amount.abs() }
-        val incomeTotal = saved.filter { it.amount.signum() > 0 }.fold(BigDecimal.ZERO) { a, t -> a + t.amount }
+        val incomeTotal = incomes.fold(BigDecimal.ZERO) { a, t -> a + t.amount }
 
         return ImportResult(
             imported = saved.size,
             expenseTotal = expenseTotal,
             incomeTotal = incomeTotal,
             byCategory = byCategory,
-            subscriptionsDetected = detectSubscriptions(userId).size
+            subscriptionsDetected = detectSubscriptions(userId).size,
+            lastMonth = saved.maxOfOrNull { it.txDate }?.toString()?.take(7)
         )
     }
 
