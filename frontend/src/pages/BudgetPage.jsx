@@ -147,6 +147,16 @@ export default function BudgetPage() {
     } catch (e) { setError(e.message) }
   }
 
+  async function changeLineCategory(line, category) {
+    try {
+      await apiFetch(`/api/budget/lines/${line.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ type: 'EXPENSE', category, description: line.description, amount: Number(line.amount) }),
+      })
+      loadBudget()
+    } catch (e) { setError(e.message) }
+  }
+
   async function deleteLine(lineId) {
     try { await apiFetch(`/api/budget/lines/${lineId}`, { method: 'DELETE' }); loadBudget() }
     catch (e) { setError(e.message) }
@@ -477,6 +487,10 @@ export default function BudgetPage() {
                         {lines.map(line => (
                           <div key={line.id} style={{ ...s.lineRow, paddingLeft: 30, background: '#fafaf8' }}>
                             <span style={{ fontSize: 13, color: t.navyLight, flex: 1 }}>{line.description}</span>
+                            <select style={s.catSelect} value={line.category || 'OTHER'} aria-label={tr('budget.category')}
+                              onChange={e => changeLineCategory(line, e.target.value)}>
+                              {EXPENSE_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {tr(c.labelKey)}</option>)}
+                            </select>
                             <span style={{ fontSize: 13, fontWeight: 600, color: t.navy }}>{fmt(line.amount)}</span>
                             <button style={s.deleteBtn} onClick={() => deleteLine(line.id)}><Ico e="✕" size={13} /></button>
                           </div>
@@ -602,6 +616,7 @@ const s = {
   barTrack:    { height: 6, background: t.borderLight, borderRadius: 3, overflow: 'hidden' },
   barFill:     { height: '100%', borderRadius: 3, transition: 'width 0.4s ease' },
   pill:        { fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 20 },
+  catSelect:   { fontSize: 12, color: '#667', background: 'transparent', border: '1px solid #e2e2dc', borderRadius: 6, padding: '2px 4px', marginRight: 8, maxWidth: 130, cursor: 'pointer' },
   deleteBtn:   { background: 'none', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: 13, padding: '2px 4px', flexShrink: 0 },
   label:       { display: 'block', fontSize: 12, color: t.navyLight, fontWeight: 500, marginBottom: 5 },
   input:       { width: '100%', padding: '9px 12px', border: `1.5px solid ${t.border}`, borderRadius: 8, fontSize: 14, color: t.navy, background: '#fff', outline: 'none', boxSizing: 'border-box' },

@@ -59,6 +59,8 @@ class BudgetService(
         require(line.budget.user.id == userId) { "Forbidden" }
         line.description = req.description
         line.amount = req.amount
+        // Moving an expense to another category also moves it on that category's page (they read budget lines).
+        if (line.type == BudgetLineType.EXPENSE && req.category != null) line.category = req.category
         lineRepo.save(line)
         recalcTotals(line.budget)
         return line.toDto()

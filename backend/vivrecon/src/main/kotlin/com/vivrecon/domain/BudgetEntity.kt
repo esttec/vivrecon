@@ -53,7 +53,7 @@ data class BudgetLineEntity(
 
     @Enumerated(EnumType.STRING)
     @Column
-    val category: ExpenseCategory? = null,   // null for income lines
+    var category: ExpenseCategory? = null,   // null for income lines
 
     @Column(nullable = false)
     var description: String,
