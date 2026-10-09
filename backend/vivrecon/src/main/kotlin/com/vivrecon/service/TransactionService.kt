@@ -191,8 +191,9 @@ class TransactionService(
             openExpenses.remove(match)
             r.refunded = true; match.refunded = true
             txRepo.save(r); txRepo.save(match)
-            if (match !in saved) {
-                // Purchase was imported earlier and is already in that month's budget: cancel it there.
+            if (match !in saved && !budgetService.reduceShopLine(userId, match.txDate.toString().take(7),
+                    BudgetLineType.EXPENSE, match.description, match.amount.negate())) {
+                // Purchase was imported earlier and its line can't be found (e.g. old "Bank import (n)"): cancel it with a minus line.
                 budgetService.addLine(
                     userId, match.txDate.toString().take(7),
                     UpsertBudgetLineRequest(
@@ -203,7 +204,8 @@ class TransactionService(
                     )
                 )
             }
-            if (r !in saved) {
+            if (r !in saved && !budgetService.reduceShopLine(userId, r.txDate.toString().take(7),
+                    BudgetLineType.INCOME, r.description, r.amount)) {
                 // Refund was imported earlier and counted as income: cancel it in its month.
                 budgetService.addLine(
                     userId, r.txDate.toString().take(7),

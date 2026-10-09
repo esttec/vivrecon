@@ -131,21 +131,26 @@ async function pdfToText(file) {
 
 function parsePdfLines(text) {
   const out = []
-  const amtRe = /[-−+]?\d[\d  .]*[.,]\d{2}/g
+  // The amount must END the line ("167,99-", "+25,55", "-12.34"); headers such as
+  // "Aruande kuupäev : 09.10.2026 15:08:59 EEST" don't, so they are skipped.
+  const endAmt = /\s([-−+]?\d{1,3}(?:[ \u00a0.]?\d{3})*[.,]\d{2})\s*([-−+])?$/
   for (const raw of text.split('\n')) {
     const line = raw.trim()
     if (line.length < 6 || line.length > 200) continue
-    const dm = line.match(DATE_RE)
+    const dm = line.match(/^(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4})\s/) // row starts with its date
     if (!dm) continue
-    const amts = line.match(amtRe)
-    if (!amts || !amts.length) continue
-    const amtStr = amts[amts.length - 1]
-    let amount = parseAmount(amtStr)
+    const am = line.match(endAmt)
+    if (!am) continue
+    let amount = parseAmount(am[1])
     if (amount === null || amount === 0) continue
-    if (!/[-−(+]/.test(amtStr)) amount = -Math.abs(amount) // unsigned statement line → treat as expense
-    let desc = line.replace(dm[0], '').replace(amtStr, '').replace(/\s+/g, ' ').trim()
-    if (desc.length < 2) continue
-    out.push({ date: dm[0], description: desc.slice(0, 255), amount })
+    const sign = am[2] || (/^[-−+]/.test(am[1]) ? am[1][0] : '')
+    // Trailing/leading "-" = money out, "+" = money in (Luminor, Swedbank PDFs); unsigned → expense.
+    amount = sign === '+' ? Math.abs(amount) : -Math.abs(amount)
+    const desc = line.slice(dm[0].length, line.length - am[0].length)
+      .replace(/^[A-Z0-9]{8,}\s+/, '') // bank archive code such as "B0621JHN"
+      .replace(/\s+/g, ' ').trim()
+    if (desc.length < 2 || /saldo|käive|balance|kokkuvõte/i.test(desc)) continue // balance/summary rows
+    out.push({ date: dm[1], description: desc.slice(0, 255), amount })
   }
   return out
 }

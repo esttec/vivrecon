@@ -197,17 +197,6 @@ export default function BudgetPage() {
     )
   }
 
-  // Move last month's leftover into this month as a Savings line.
-  async function rolloverToSavings() {
-    try {
-      await apiFetch(`/api/budget/${yearMonth}/lines`, {
-        method: 'POST',
-        body: JSON.stringify({ type: 'EXPENSE', category: 'SAVINGS', description: tr('budget.fromLastMonth'), amount: Number(prevLeftover.toFixed(2)) }),
-      })
-      setRolledOver(true); setPrevLeftover(0); loadBudget()
-    } catch (e) { setError(e.message) }
-  }
-
   // ── Derived numbers ──────────────────────────────────────────────────────
   const totalIncome   = budget ? Number(budget.totalIncome)   : 0
   const totalExpenses = budget ? Number(budget.totalExpenses) : 0
@@ -300,16 +289,7 @@ export default function BudgetPage() {
 
             {budget && (
               <>
-                {/* Roll last month's leftover into savings */}
-                {prevLeftover > 0 && totalIncome > 0 && yearMonth === thisMonth() && !rolledOver && (
-                  <div style={{ ...s.card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', background: '#eef5ee', borderColor: '#bcdcc4' }}>
-                    <span style={{ fontSize: 13, color: t.navy }}>
-                      <Ico e="🐷" size={14} style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 4 }} />{tr('budget.leftoverPrompt', { amount: fmt(prevLeftover) })}
-                    </span>
-                    <button style={s.btnSmall} onClick={rolloverToSavings}>{tr('budget.moveToSavings')}</button>
-                  </div>
-                )}
-
+                {/* Last month's leftover is carried into the balance (carry), not booked as an expense. */}
                 {/* ── Summary cards ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
                   <SummaryCard label={tr('budget.income')}   value={fmt(totalIncome || null)}  sub={`${(budget.incomeLines ?? []).length} ${tr('budget.sources')}`} bg={badge.green} />

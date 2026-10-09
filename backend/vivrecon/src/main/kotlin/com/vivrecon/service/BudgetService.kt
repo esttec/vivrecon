@@ -151,6 +151,22 @@ class BudgetService(
 
     // ── private helpers ───────────────────────────────────────────────────────
 
+    /**
+     * Take [amount] out of the line for this shop in that month (e.g. a refund cancelling a purchase).
+     * The line is deleted when it reaches zero. Returns false when no such line exists.
+     */
+    @Transactional
+    fun reduceShopLine(userId: Long, yearMonth: String, type: BudgetLineType, shop: String, amount: java.math.BigDecimal): Boolean {
+        val budget = budgetRepo.findByUserIdAndYearMonth(userId, yearMonth).orElse(null) ?: return false
+        val key = shopKey(shop)
+        val line = lineRepo.findAllByBudgetIdAndType(budget.id, type)
+            .firstOrNull { shopKey(it.description) == key && it.amount >= amount } ?: return false
+        line.amount = line.amount - amount
+        if (line.amount.signum() <= 0) lineRepo.delete(line) else lineRepo.save(line)
+        recalcTotals(budget)
+        return true
+    }
+
     private fun recalcTotals(budget: BudgetEntity) {
         val lines = lineRepo.findAllByBudgetId(budget.id)
         budget.totalIncome = lines.filter { it.type == BudgetLineType.INCOME }.fold(java.math.BigDecimal.ZERO) { acc, l -> acc + l.amount }
