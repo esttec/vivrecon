@@ -26,6 +26,7 @@ export default function ChildrenPage() {
 
   const [yearMonth, setYearMonth] = useState(thisMonth())
   const [children, setChildren]   = useState([])
+  const [budgetLines, setBudgetLines] = useState([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
   const [newName, setNewName]     = useState('')
@@ -38,7 +39,12 @@ export default function ChildrenPage() {
 
   async function load() {
     setLoading(true); setError('')
-    try { setChildren(await apiFetch(`/api/children/${yearMonth}`) || []) }
+    try {
+      const [kids, budget] = await Promise.all([apiFetch(`/api/children/${yearMonth}`), apiFetch(`/api/budget/${yearMonth}`)])
+      setChildren(kids || [])
+      // Budget lines the user filed under Children (e.g. moved there from an import).
+      setBudgetLines((budget?.expenseLines || []).filter(l => l.category === 'CHILDREN'))
+    }
     catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -85,6 +91,7 @@ export default function ChildrenPage() {
   }
 
   const grandTotal = children.reduce((sum, c) => sum + Number(c.total), 0)
+    + budgetLines.reduce((sum, l) => sum + Number(l.amount), 0)
 
   return (
     <PageShell>
@@ -103,6 +110,17 @@ export default function ChildrenPage() {
           <span style={{ color: badge.blue.color, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tr('children.total')}</span>
           <span style={{ color: badge.blue.color, fontSize: 26, fontWeight: 800 }}>{fmt(grandTotal)}</span>
         </div>
+
+        {budgetLines.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{tr('nav.budget')}</div>
+            {budgetLines.map(l => (
+              <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0', borderBottom: '1px solid #eee' }}>
+                <span>{l.description}</span><span style={{ fontWeight: 600 }}>{fmt(l.amount)}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={addChild} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input style={{ ...s.input, flex: 1 }} placeholder={tr('children.namePlaceholder')} value={newName} onChange={e => setNewName(e.target.value)} />

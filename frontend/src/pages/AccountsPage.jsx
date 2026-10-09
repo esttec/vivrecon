@@ -29,6 +29,7 @@ export default function AccountsPage() {
   const [editVal, setEditVal]   = useState('')
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [txs, setTxs]           = useState([])
   const fileRef = useRef(null)
 
   async function handleImport(e) {
@@ -54,7 +55,10 @@ export default function AccountsPage() {
 
   async function load() {
     setLoading(true); setError('')
-    try { setAccounts(await apiFetch('/api/accounts') || []) }
+    try {
+      const [accs, recent] = await Promise.all([apiFetch('/api/accounts'), apiFetch('/api/transactions?limit=50')])
+      setAccounts(accs || []); setTxs(recent || [])
+    }
     catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -76,6 +80,9 @@ export default function AccountsPage() {
   }
 
   const netWorth = accounts.reduce((s, a) => s + Number(a.balance), 0)
+  const month = new Date().toISOString().slice(0, 7)
+  const spentThisMonth = txs.filter(x => x.date.startsWith(month) && Number(x.amount) < 0 && !x.refunded)
+    .reduce((s, x) => s - Number(x.amount), 0)
   const iconFor = key => (TYPES.find(x => x.key === key)?.icon ?? '💼')
 
   const typeTab = (active) => ({
@@ -156,6 +163,22 @@ export default function AccountsPage() {
                 <button style={s.deleteBtn} onClick={() => del(a.id)}><Ico e="✕" size={13} /></button>
               </div>
             ))}
+
+            {txs.length > 0 && (
+              <div style={s.card}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: t.navy, marginBottom: 8 }}>
+                  <span>{tr('accounts.recent')}</span>
+                  <span style={{ color: '#c0392b' }}>{tr('accounts.spentThisMonth')}: {fmt(spentThisMonth)}</span>
+                </div>
+                {txs.map((x, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13, padding: '5px 0', borderTop: '1px solid #f0f0ec', opacity: x.refunded ? 0.5 : 1 }}>
+                    <span style={{ color: t.navyLight, flexShrink: 0 }}>{x.date.split('-').reverse().join('.')}</span>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.description}</span>
+                    <span style={{ fontWeight: 600, color: Number(x.amount) < 0 ? '#c0392b' : '#1e6b3a' }}>{fmt(x.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>

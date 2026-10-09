@@ -30,6 +30,7 @@ const EXPENSE_CATEGORIES = [
   { key: 'TRAVEL',       labelKey: 'cat.travel',        icon: '✈️', profileField: null               },
   { key: 'SAVINGS',      labelKey: 'cat.savings',       icon: '💰', profileField: '_savings'          },
   { key: 'DEBTS',        labelKey: 'cat.debts',         icon: '💳', profileField: 'debtPayments'      },
+  { key: 'CHILDREN',     labelKey: 'nav.children',      icon: '👶', profileField: null               },
   { key: 'OTHER',        labelKey: 'cat.other',         icon: '📦', profileField: 'otherFixedExpenses'},
 ]
 
@@ -75,6 +76,7 @@ export default function BudgetPage() {
   // Last-month rollover
   const [prevLeftover, setPrevLeftover] = useState(0)
   const [rolledOver, setRolledOver]     = useState(false)
+  const [carry, setCarry]               = useState(0) // money left over from all earlier months
 
   // Bank statement import
   const bankFileRef = useRef(null)
@@ -110,6 +112,10 @@ export default function BudgetPage() {
       const prev = await apiFetch(`/api/budget/${addMonths(yearMonth, -1)}`)
       const leftover = Number(prev?.totalIncome ?? 0) - Number(prev?.totalExpenses ?? 0)
       setPrevLeftover(leftover > 0 ? leftover : 0)
+      // Running balance: what's left from every earlier month carries into this one, like a bank account.
+      const all = await apiFetch('/api/budget') || []
+      setCarry(all.filter(b => b.yearMonth < yearMonth)
+        .reduce((sum, b) => sum + Number(b.totalIncome ?? 0) - Number(b.totalExpenses ?? 0), 0))
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -206,6 +212,7 @@ export default function BudgetPage() {
   const totalIncome   = budget ? Number(budget.totalIncome)   : 0
   const totalExpenses = budget ? Number(budget.totalExpenses) : 0
   const balance       = totalIncome - totalExpenses
+  const available     = balance + carry
   const spentPct      = totalIncome > 0 ? Math.min(Math.round(totalExpenses / totalIncome * 100), 100) : 0
 
   // Planned amounts from profile (reference only)
@@ -307,8 +314,9 @@ export default function BudgetPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
                   <SummaryCard label={tr('budget.income')}   value={fmt(totalIncome || null)}  sub={`${(budget.incomeLines ?? []).length} ${tr('budget.sources')}`} bg={badge.green} />
                   <SummaryCard label={tr('budget.expenses')} value={fmt(totalExpenses)}        sub={totalIncome > 0 ? tr('budget.pctOfIncome', { pct: spentPct }) : null} bg={badge.red}  />
-                  <SummaryCard label={tr('budget.balance')}  value={fmt(balance)}              sub={totalIncome > 0 ? (balance >= 0 ? tr('budget.onTrack') : tr('budget.overBudget')) : null}
-                    bg={balance >= 0 ? badge.blue : badge.red} fullWidth={isMobile} />
+                  <SummaryCard label={tr('budget.balance')}  value={fmt(available)}
+                    sub={carry ? tr('budget.carried', { amount: fmt(carry) }) : (totalIncome > 0 ? (balance >= 0 ? tr('budget.onTrack') : tr('budget.overBudget')) : null)}
+                    bg={available >= 0 ? badge.blue : badge.red} fullWidth={isMobile} />
                 </div>
 
                 {/* Spending bar */}
@@ -511,11 +519,11 @@ export default function BudgetPage() {
                   )}
 
                   {/* Available balance — like a bank account: income minus spending */}
-                  <div style={{ ...s.budgetRow, background: balance >= 0 ? '#e6f4ea' : '#fdecea', borderRadius: 8, padding: '10px 12px', marginTop: 10, border: 'none' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: balance >= 0 ? '#1e6b3a' : '#9b2020' }}>
+                  <div style={{ ...s.budgetRow, background: available >= 0 ? '#e6f4ea' : '#fdecea', borderRadius: 8, padding: '10px 12px', marginTop: 10, border: 'none' }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: available >= 0 ? '#1e6b3a' : '#9b2020' }}>
                       <Ico e="🏦" size={15} style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 4 }} />{tr('budget.available')}
                     </span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: balance >= 0 ? '#1e6b3a' : '#c0392b' }}>{fmt(balance)}</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: available >= 0 ? '#1e6b3a' : '#c0392b' }}>{fmt(available)}</span>
                   </div>
                 </div>
               </>

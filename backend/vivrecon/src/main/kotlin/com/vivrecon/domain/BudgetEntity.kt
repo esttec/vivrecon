@@ -9,7 +9,7 @@ enum class BudgetLineType { INCOME, EXPENSE }
 enum class ExpenseCategory {
     HOUSE, EATING, RESTAURANTS, TRANSPORT, CLOTHES, ENTERTAINMENT, COMMUNICATION,
     SPORT, EDUCATION, MARKETPLACES, WORK, HEALTH, GADGETS, GIFTS, TRAVEL,
-    SAVINGS, DEBTS, OTHER
+    SAVINGS, DEBTS, CHILDREN, OTHER
 }
 
 // ── Monthly Budget ──────────────────────────────────────────────────────────

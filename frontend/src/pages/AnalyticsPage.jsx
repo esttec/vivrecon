@@ -13,7 +13,7 @@ const CAT_META = {
   TRANSPORT: ['🚗', 'cat.transport'], CLOTHES: ['👗', 'cat.clothing'], ENTERTAINMENT: ['🎬', 'cat.entertainment'],
   COMMUNICATION: ['📶', 'cat.communication'], SPORT: ['🏋️', 'cat.sport'], EDUCATION: ['🎓', 'cat.education'],
   MARKETPLACES: ['🛒', 'cat.marketplaces'], WORK: ['💼', 'cat.work'], HEALTH: ['🏥', 'cat.health'],
-  GADGETS: ['💻', 'cat.gadgets'], GIFTS: ['🎁', 'cat.gifts'], TRAVEL: ['✈️', 'cat.travel'],
+  GADGETS: ['💻', 'cat.gadgets'], GIFTS: ['🎁', 'cat.gifts'], CHILDREN: ['👶', 'nav.children'], TRAVEL: ['✈️', 'cat.travel'],
   SAVINGS: ['💰', 'cat.savings'], DEBTS: ['💳', 'cat.debts'], OTHER: ['📦', 'cat.other'],
 }
 

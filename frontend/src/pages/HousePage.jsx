@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiFetch } from '../api/client'
 import PageShell from '../components/PageShell'
+import BudgetLinesCard from '../components/BudgetLinesCard'
 import Ico from '../components/Icon'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../context/UserContext'
@@ -115,6 +116,7 @@ export default function HousePage() {
           </div>
         </div>
 
+        <BudgetLinesCard category="HOUSE" yearMonth={yearMonth} />
         {/* Budget vs actual for House — pulled from the budget page */}
         <div style={s.accountCard}>
           <div style={s.acctCol}>

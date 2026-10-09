@@ -11,8 +11,8 @@ import Ico from '../components/Icon'
 // Categories the plan treats as trimmable vs essential.
 const CUTTABLE  = ['RESTAURANTS', 'ENTERTAINMENT', 'CLOTHES', 'TRAVEL', 'GADGETS', 'MARKETPLACES', 'GIFTS', 'SPORT']
 const ESSENTIAL = ['HOUSE', 'EATING', 'TRANSPORT', 'HEALTH', 'COMMUNICATION', 'EDUCATION', 'WORK', 'OTHER']
-const CAT_ICON  = { HOUSE: '🏠', EATING: '🍎', TRANSPORT: '🚗', HEALTH: '🏥', COMMUNICATION: '📶', EDUCATION: '🎓', WORK: '💼', OTHER: '📦', RESTAURANTS: '🍽️', ENTERTAINMENT: '🎬', CLOTHES: '👗', TRAVEL: '✈️', GADGETS: '💻', MARKETPLACES: '🛒', GIFTS: '🎁', SPORT: '🏋️' }
-const CAT_LABEL = { HOUSE: 'cat.house', EATING: 'cat.food', RESTAURANTS: 'cat.restaurants', TRANSPORT: 'cat.transport', CLOTHES: 'cat.clothing', ENTERTAINMENT: 'cat.entertainment', COMMUNICATION: 'cat.communication', SPORT: 'cat.sport', EDUCATION: 'cat.education', MARKETPLACES: 'cat.marketplaces', WORK: 'cat.work', HEALTH: 'cat.health', GADGETS: 'cat.gadgets', GIFTS: 'cat.gifts', TRAVEL: 'cat.travel', OTHER: 'cat.other' }
+const CAT_ICON  = { HOUSE: '🏠', EATING: '🍎', TRANSPORT: '🚗', HEALTH: '🏥', COMMUNICATION: '📶', EDUCATION: '🎓', WORK: '💼', OTHER: '📦', RESTAURANTS: '🍽️', ENTERTAINMENT: '🎬', CLOTHES: '👗', TRAVEL: '✈️', GADGETS: '💻', MARKETPLACES: '🛒', GIFTS: '🎁', SPORT: '🏋️', CHILDREN: '👶' }
+const CAT_LABEL = { HOUSE: 'cat.house', EATING: 'cat.food', RESTAURANTS: 'cat.restaurants', TRANSPORT: 'cat.transport', CLOTHES: 'cat.clothing', ENTERTAINMENT: 'cat.entertainment', COMMUNICATION: 'cat.communication', SPORT: 'cat.sport', EDUCATION: 'cat.education', MARKETPLACES: 'cat.marketplaces', WORK: 'cat.work', HEALTH: 'cat.health', GADGETS: 'cat.gadgets', GIFTS: 'cat.gifts', TRAVEL: 'cat.travel', CHILDREN: 'nav.children', OTHER: 'cat.other' }
 const thisMonth = () => new Date().toISOString().slice(0, 7)
 
 function sumByCats(lines, cats) {

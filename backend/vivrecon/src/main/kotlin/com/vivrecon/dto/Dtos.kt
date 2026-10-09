@@ -68,6 +68,7 @@ data class ImportResult(
     val subscriptionsDetected: Int,
     val lastMonth: String? = null   // "yyyy-MM" of the newest imported transaction, so the UI can jump there
 )
+data class TxResponse(val date: String, val description: String, val amount: BigDecimal, val category: String?, val refunded: Boolean)
 data class CreateSubscriptionRequest(
     val name: String,
     val category: String? = null,

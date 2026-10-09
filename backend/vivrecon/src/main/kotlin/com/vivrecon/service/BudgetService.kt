@@ -12,8 +12,30 @@ import java.math.RoundingMode
 class BudgetService(
     private val userRepo: UserRepository,
     private val budgetRepo: BudgetRepository,
-    private val lineRepo: BudgetLineRepository
+    private val lineRepo: BudgetLineRepository,
+    private val jdbc: org.springframework.jdbc.core.JdbcTemplate
 ) {
+
+    /** "JARVE SELVERI (5)" / "Refund: JYSK.EE" → "jarve selveri" / "jysk.ee": the shop key used for remembered categories. */
+    fun shopKey(description: String): String =
+        description.removePrefix("Refund: ").replace(Regex("""\s*\(\d+\)$"""), "").trim().lowercase().take(255)
+
+    /** Remember the user's choice so the next import files this shop the same way. */
+    fun rememberShopCategory(userId: Long, description: String, category: ExpenseCategory) {
+        val key = shopKey(description)
+        if (key.isBlank()) return
+        jdbc.update(
+            """INSERT INTO merchant_categories (user_id, merchant, category) VALUES (?, ?, ?)
+               ON CONFLICT (user_id, merchant) DO UPDATE SET category = EXCLUDED.category""",
+            userId, key, category.name
+        )
+    }
+
+    fun shopCategories(userId: Long): Map<String, ExpenseCategory> =
+        jdbc.query("SELECT merchant, category FROM merchant_categories WHERE user_id = ?",
+            { rs, _ -> rs.getString(1) to rs.getString(2) }, userId)
+            .mapNotNull { (m, c) -> runCatching { m to ExpenseCategory.valueOf(c) }.getOrNull() }
+            .toMap()
 
     fun getBudget(userId: Long, yearMonth: String): BudgetResponse {
         val budget = budgetRepo.findByUserIdAndYearMonth(userId, yearMonth)
@@ -60,7 +82,10 @@ class BudgetService(
         line.description = req.description
         line.amount = req.amount
         // Moving an expense to another category also moves it on that category's page (they read budget lines).
-        if (line.type == BudgetLineType.EXPENSE && req.category != null) line.category = req.category
+        if (line.type == BudgetLineType.EXPENSE && req.category != null && req.category != line.category) {
+            line.category = req.category
+            rememberShopCategory(userId, line.description, req.category)
+        }
         lineRepo.save(line)
         recalcTotals(line.budget)
         return line.toDto()

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import PageShell from '../components/PageShell'
+import BudgetLinesCard from '../components/BudgetLinesCard'
 import Ico from '../components/Icon'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../context/UserContext'
@@ -60,6 +61,7 @@ export default function TravelPage() {
         </div>
 
         {error && <p style={s.error}>{error}</p>}
+        <BudgetLinesCard category="TRAVEL" />
 
         {/* Summary */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>

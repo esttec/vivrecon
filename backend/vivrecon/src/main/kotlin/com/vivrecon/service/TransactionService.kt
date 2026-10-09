@@ -141,7 +141,8 @@ object TxRules {
 class TransactionService(
     private val userRepo: UserRepository,
     private val txRepo: TransactionRepository,
-    private val budgetService: BudgetService
+    private val budgetService: BudgetService,
+    private val accountRepo: AccountRepository
 ) {
 
     @Transactional
@@ -155,6 +156,7 @@ class TransactionService(
         val already = existing
             .groupingBy { key(it.txDate, it.amount, it.description) }.eachCount().toMutableMap()
 
+        val myShops = budgetService.shopCategories(userId) // categories the user picked earlier
         val saved = mutableListOf<TransactionEntity>()
         for (item in req.items) {
             if (item.amount.compareTo(BigDecimal.ZERO) == 0) continue
@@ -162,7 +164,7 @@ class TransactionService(
             val left = already[k] ?: 0
             if (left > 0) { already[k] = left - 1; continue }
             val isExpense = item.amount.signum() < 0
-            val category = if (isExpense) TxRules.categorize(item.description) else null
+            val category = if (isExpense) myShops[budgetService.shopKey(item.description)] ?: TxRules.categorize(item.description) else null
             saved += txRepo.save(
                 TransactionEntity(
                     user = user,
@@ -249,6 +251,13 @@ class TransactionService(
             )
         }
 
+        // Keep the user's bank account in step with the statement: + income − spending of the new rows.
+        // shortcut: uses the first BANK account; add an account picker to the import when users have several banks.
+        accountRepo.findAllByUserIdOrderByCreatedAtAsc(userId).firstOrNull { it.type == AccountType.BANK }?.let { acc ->
+            acc.balance = acc.balance + saved.fold(BigDecimal.ZERO) { a, tx -> a + tx.amount }
+            accountRepo.save(acc)
+        }
+
         val byCategory = expenses.groupBy { it.category ?: ExpenseCategory.OTHER }
             .map { (cat, txs) ->
                 CategoryTotal(cat.name, txs.fold(BigDecimal.ZERO) { a, t -> a + t.amount.abs() }, txs.size)
@@ -270,6 +279,11 @@ class TransactionService(
 
     fun listTransactions(userId: Long): List<TransactionEntity> =
         txRepo.findAllByUserIdOrderByTxDateDesc(userId)
+
+    fun recent(userId: Long, limit: Int): List<TxResponse> =
+        listTransactions(userId).take(limit).map {
+            TxResponse(it.txDate.toString(), it.description, it.amount, it.category?.name, it.refunded)
+        }
 
     /** Recurring charges: known subscription merchants, or any merchant seen in ≥2 months. */
     fun detectSubscriptions(userId: Long): List<SubscriptionResponse> {

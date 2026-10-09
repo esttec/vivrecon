@@ -21,6 +21,11 @@ class TransactionController(
     fun import(@RequestBody req: ImportTxRequest): ResponseEntity<ImportResult> =
         ResponseEntity.ok(txService.import(currentUserId(), req))
 
+    /** GET /api/transactions?limit=50 → newest imported bank transactions */
+    @GetMapping("/transactions")
+    fun transactions(@RequestParam(defaultValue = "50") limit: Int): ResponseEntity<List<com.vivrecon.dto.TxResponse>> =
+        ResponseEntity.ok(txService.recent(currentUserId(), limit.coerceIn(1, 500)))
+
     /** GET /api/subscriptions → manual + auto-detected recurring charges */
     @GetMapping("/subscriptions")
     fun subscriptions(): ResponseEntity<List<SubscriptionResponse>> =

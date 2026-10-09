@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiFetch } from '../api/client'
 import PageShell from '../components/PageShell'
+import BudgetLinesCard from '../components/BudgetLinesCard'
 import Ico from '../components/Icon'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../context/UserContext'
@@ -86,6 +87,7 @@ export default function ClothingPage() {
         </div>
 
         {error && <p style={s.error}>{error}</p>}
+        <BudgetLinesCard category="CLOTHES" yearMonth={yearMonth} />
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
           {STATUSES.map(status => (
