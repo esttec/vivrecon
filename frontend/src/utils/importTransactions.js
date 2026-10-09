@@ -37,7 +37,7 @@ function splitCsvLine(line, delim) {
 }
 
 function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim())
+  const lines = text.split(/\r\n|\r|\n/).filter(l => l.trim())
   if (!lines.length) return []
   const delim = (text.match(/;/g) || []).length > (text.match(/,/g) || []).length ? ';'
     : (text.match(/\t/g) || []).length > (text.match(/,/g) || []).length ? '\t' : ','
@@ -45,13 +45,17 @@ function parseCsv(text) {
 
   const header = rows[0].map(h => h.toLowerCase())
   const looksHeader = header.some(h =>
-    /date|kuupäev|aeg|amount|summa|sum|selgitus|description|saaja|payee|details|narrative|deebet|kreedit|debit|credit/.test(h))
+    /date|päev|aeg|amount|summa|sum|selgitus|description|saaja|payee|details|narrative|deebet|kreedit|debit|credit/.test(h))
 
-  let dateIdx = -1, descIdx = -1, amtIdx = -1, debIdx = -1, creIdx = -1
+  let detIdx = -1, dateIdx = -1, descIdx = -1, amtIdx = -1, debIdx = -1, creIdx = -1, dcIdx = -1
   if (looksHeader) {
     header.forEach((h, i) => {
-      if (dateIdx < 0 && /date|kuupäev|aeg|data/.test(h)) dateIdx = i
-      if (descIdx < 0 && /selgitus|description|saaja|payee|details|narrative|merchant|nimi|reference|beneficiary/.test(h)) descIdx = i
+      if (dateIdx < 0 && /date|päev|aeg|data/.test(h)) dateIdx = i
+      // skip IBAN/bank-code columns like "Saaja/maksja konto" (LHV, SEB)
+      if (descIdx < 0 && !/konto|account|kood|code/.test(h) && /selgitus|description|saaja|payee|details|narrative|merchant|nimi|reference|beneficiary/.test(h)) descIdx = i
+      // Swedbank/SEB/LHV: unsigned Summa + a "Deebet/Kreedit (D/C)" column holding D or K/C
+      if (dcIdx < 0 && /(deebet|debit)\s*\/\s*(kreedit|krediit|credit)/.test(h)) { dcIdx = i; return }
+      if (detIdx < 0 && /makse andmed|selgitus|details|description|narrative/.test(h)) detIdx = i
       if (debIdx < 0 && /deebet|debit|väljaminek/.test(h)) debIdx = i
       if (creIdx < 0 && /kreedit|credit|laekumine/.test(h)) creIdx = i
       if (amtIdx < 0 && /amount|summa|sum|makse|turnover|tehingu summa/.test(h) && !/deebet|kreedit|debit|credit/.test(h)) amtIdx = i
@@ -62,6 +66,8 @@ function parseCsv(text) {
   const out = []
   for (const cols of dataRows) {
     if (cols.length < 2) continue
+    // Swedbank adds opening/turnover/closing balance rows — not transactions
+    if (cols.some(c => /^(algsaldo|lõppsaldo|käive|opening balance|closing balance|turnover)$/i.test(c))) continue
 
     const dateVal = dateIdx >= 0 ? cols[dateIdx] : cols.find(isDate)
     if (!dateVal) continue
@@ -69,6 +75,9 @@ function parseCsv(text) {
     let amount = null
     if (amtIdx >= 0) {
       amount = parseAmount(cols[amtIdx])
+      const dc = dcIdx >= 0 ? String(cols[dcIdx]).trim().toUpperCase() : ''
+      if (amount !== null && dc === 'D') amount = -Math.abs(amount)
+      else if (amount !== null && (dc === 'K' || dc === 'C')) amount = Math.abs(amount)
     } else if (debIdx >= 0 || creIdx >= 0) {
       const deb = debIdx >= 0 ? parseAmount(cols[debIdx]) : null
       const cre = creIdx >= 0 ? parseAmount(cols[creIdx]) : null
@@ -86,6 +95,7 @@ function parseCsv(text) {
     if (amount === null || amount === 0) continue
 
     let desc = descIdx >= 0 ? cols[descIdx] : ''
+    if (!desc && detIdx >= 0) desc = cols[detIdx] // e.g. cash deposits have no payee name
     if (!desc) {
       desc = cols.filter(c => c && !isDate(c) && parseAmount(c) === null)
         .sort((a, b) => b.length - a.length)[0] || ''

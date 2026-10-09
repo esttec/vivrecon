@@ -328,3 +328,9 @@ data class TravelOfferResponse(
 )
 
 data class SelectHotelRequest(val selectedHotel: String, val hotelPricePerNight: BigDecimal)
+
+// ── Budget template ─────────────────────────────────────────────────────────
+data class ApplyBudgetTemplateRequest(
+    val template: String,
+    val monthlyIncome: java.math.BigDecimal
+)

@@ -17,7 +17,7 @@ function num(s) {
 }
 
 function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim())
+  const lines = text.split(/\r\n|\r|\n/).filter(l => l.trim())
   const delim = (text.match(/;/g) || []).length > (text.match(/,/g) || []).length ? ';' : ','
   const rows = []
   for (const line of lines) {

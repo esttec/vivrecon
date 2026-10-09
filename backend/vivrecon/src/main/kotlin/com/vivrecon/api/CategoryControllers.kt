@@ -24,6 +24,11 @@ class BudgetController(private val budgetService: BudgetService) {
     fun get(@PathVariable yearMonth: String): ResponseEntity<BudgetResponse> =
         ResponseEntity.ok(budgetService.getOrCreateBudget(currentUserId(), yearMonth))
 
+    /** POST /api/budget/{yearMonth}/apply-template  → replace the month with a preset (50/30/20 etc.) */
+    @PostMapping("/{yearMonth}/apply-template")
+    fun applyTemplate(@PathVariable yearMonth: String, @RequestBody req: ApplyBudgetTemplateRequest): ResponseEntity<BudgetResponse> =
+        ResponseEntity.ok(budgetService.applyTemplate(currentUserId(), yearMonth, req))
+
     /** POST /api/budget/{yearMonth}/lines  → add income or expense line */
     @PostMapping("/{yearMonth}/lines")
     fun addLine(@PathVariable yearMonth: String, @RequestBody req: UpsertBudgetLineRequest): ResponseEntity<BudgetLineResponse> =

@@ -232,7 +232,8 @@ class TravelService(
 
     @Transactional
     fun selectOffer(userId: Long, tripId: Long, offerId: Long): TravelOfferResponse {
-        val trip = tripRepo.findByIdAndUserId(tripId, userId).orElseThrow { NoSuchElementException("Trip not found") }
+        // validate the trip exists and belongs to the user (throws if not)
+        tripRepo.findByIdAndUserId(tripId, userId).orElseThrow { NoSuchElementException("Trip not found") }
         // deselect all same-type offers, then select this one
         val offer = offerRepo.findById(offerId).orElseThrow { NoSuchElementException("Offer not found") }
         offerRepo.findAllByTripId(tripId)

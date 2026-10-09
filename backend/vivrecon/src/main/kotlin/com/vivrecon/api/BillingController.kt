@@ -18,6 +18,13 @@ class BillingController(private val billingService: BillingService) {
     fun checkout(@RequestBody req: CheckoutRequest): ResponseEntity<CheckoutResponse> =
         ResponseEntity.ok(billingService.createCheckout(currentUserId(), req.plan))
 
+    /** POST /api/billing/confirm {sessionId} → activate premium right after Checkout */
+    @PostMapping("/confirm")
+    fun confirm(@RequestBody req: Map<String, String>): ResponseEntity<Void> {
+        billingService.confirmCheckout(currentUserId(), req["sessionId"] ?: throw IllegalArgumentException("sessionId required"))
+        return ResponseEntity.noContent().build()
+    }
+
     /** POST /api/billing/webhook — Stripe calls this (no auth; signature-verified). */
     @PostMapping("/webhook")
     fun webhook(
