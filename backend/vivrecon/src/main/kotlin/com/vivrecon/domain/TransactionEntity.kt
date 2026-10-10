@@ -31,6 +31,10 @@ data class TransactionEntity(
     @Column(length = 20)
     val category: ExpenseCategory? = null,
 
+    /** The bank's own id for this row (archive code); unique per user, so a row is never registered twice. */
+    @Column(name = "bank_ref", length = 64)
+    val bankRef: String? = null,
+
     /** True for a purchase and its matching refund; both are left out of the budget. */
     @Column(nullable = false)
     var refunded: Boolean = false,

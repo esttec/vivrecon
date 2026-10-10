@@ -156,10 +156,16 @@ class TransactionService(
         val already = existing
             .groupingBy { key(it.txDate, it.amount, it.description) }.eachCount().toMutableMap()
 
+        val knownRefs = existing.mapNotNull { it.bankRef }.toMutableSet()
+
         val myShops = budgetService.shopCategories(userId) // categories the user picked earlier
         val saved = mutableListOf<TransactionEntity>()
         for (item in req.items) {
             if (item.amount.compareTo(BigDecimal.ZERO) == 0) continue
+            // 1) The bank's id is the reliable check: seen before (or twice in this file) → already registered.
+            val ref = item.ref?.trim()?.takeIf { it.isNotEmpty() }?.take(64)
+            if (ref != null && !knownRefs.add(ref)) continue
+            // 2) Fallback for statements without ids and for rows imported before ids were stored.
             val k = key(TxRules.parseDate(item.date), item.amount, item.description)
             val left = already[k] ?: 0
             if (left > 0) { already[k] = left - 1; continue }
@@ -172,7 +178,8 @@ class TransactionService(
                     description = item.description.take(255),
                     merchant = TxRules.merchantKey(item.description).take(120),
                     amount = item.amount,
-                    category = category
+                    category = category,
+                    bankRef = ref
                 )
             )
         }

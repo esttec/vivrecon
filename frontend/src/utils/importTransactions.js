@@ -47,7 +47,7 @@ function parseCsv(text) {
   const looksHeader = header.some(h =>
     /date|päev|aeg|amount|summa|sum|selgitus|description|saaja|payee|details|narrative|deebet|kreedit|debit|credit/.test(h))
 
-  let detIdx = -1, dateIdx = -1, descIdx = -1, amtIdx = -1, debIdx = -1, creIdx = -1, dcIdx = -1
+  let refIdx = -1, detIdx = -1, dateIdx = -1, descIdx = -1, amtIdx = -1, debIdx = -1, creIdx = -1, dcIdx = -1
   if (looksHeader) {
     header.forEach((h, i) => {
       if (dateIdx < 0 && /date|päev|aeg|data/.test(h)) dateIdx = i
@@ -55,6 +55,8 @@ function parseCsv(text) {
       if (descIdx < 0 && !/konto|account|kood|code/.test(h) && /selgitus|description|saaja|payee|details|narrative|merchant|nimi|reference|beneficiary/.test(h)) descIdx = i
       // Swedbank/SEB/LHV: unsigned Summa + a "Deebet/Kreedit (D/C)" column holding D or K/C
       if (dcIdx < 0 && /(deebet|debit)\s*\/\s*(kreedit|krediit|credit)/.test(h)) { dcIdx = i; return }
+      // Bank's unique row id (Luminor "Arhiveerimiskood", Swedbank/SEB/LHV "Arhiveerimistunnus"); not "Viitenumber"
+      if (refIdx < 0 && /arhiveerimis|archiv|transaction id|tehingu id/.test(h)) refIdx = i
       if (detIdx < 0 && /makse andmed|selgitus|details|description|narrative/.test(h)) detIdx = i
       if (debIdx < 0 && /deebet|debit|väljaminek/.test(h)) debIdx = i
       if (creIdx < 0 && /kreedit|credit|laekumine/.test(h)) creIdx = i
@@ -102,7 +104,7 @@ function parseCsv(text) {
     }
     if (!desc || desc.length < 2) continue
 
-    out.push({ date: String(dateVal).trim(), description: desc.trim().slice(0, 255), amount })
+    out.push({ date: String(dateVal).trim(), description: desc.trim().slice(0, 255), amount, ref: refIdx >= 0 ? (cols[refIdx] || null) : null })
   }
   return out
 }
@@ -146,11 +148,12 @@ function parsePdfLines(text) {
     const sign = am[2] || (/^[-−+]/.test(am[1]) ? am[1][0] : '')
     // Trailing/leading "-" = money out, "+" = money in (Luminor, Swedbank PDFs); unsigned → expense.
     amount = sign === '+' ? Math.abs(amount) : -Math.abs(amount)
-    const desc = line.slice(dm[0].length, line.length - am[0].length)
-      .replace(/^[A-Z0-9]{8,}\s+/, '') // bank archive code such as "B0621JHN"
-      .replace(/\s+/g, ' ').trim()
+    let desc = line.slice(dm[0].length, line.length - am[0].length).trim()
+    const code = /^([A-Z0-9]{8,})\s+/.exec(desc) // bank archive code such as "B0621JHN" = same id as in the CSV
+    if (code) desc = desc.slice(code[0].length)
+    desc = desc.replace(/\s+/g, ' ').trim()
     if (desc.length < 2 || /saldo|käive|balance|kokkuvõte/i.test(desc)) continue // balance/summary rows
-    out.push({ date: dm[1], description: desc.slice(0, 255), amount })
+    out.push({ date: dm[1], description: desc.slice(0, 255), amount, ref: code && /\d/.test(code[1]) ? code[1] : null })
   }
   return out
 }

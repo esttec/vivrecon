@@ -57,7 +57,7 @@ data class ChildResponse(
 
 // ── Bank import & subscriptions ───────────────────────────────────────────────
 
-data class ImportTxItem(val date: String, val description: String, val amount: BigDecimal)
+data class ImportTxItem(val date: String, val description: String, val amount: BigDecimal, val ref: String? = null)
 data class ImportTxRequest(val items: List<ImportTxItem>)
 data class CategoryTotal(val category: String, val amount: BigDecimal, val count: Int)
 data class ImportResult(
