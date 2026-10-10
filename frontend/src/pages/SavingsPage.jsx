@@ -9,7 +9,8 @@ import { t, badge } from '../theme'
 
 export default function SavingsPage() {
   const isMobile = useIsMobile()
-  const { fmt } = useUser()
+  const { fmt, profile } = useUser()
+  const [avgIncome, setAvgIncome] = useState(0) // average monthly income from the budget months
   const { t: tr } = useT()
 
   const [goals, setGoals]     = useState([])
@@ -38,6 +39,8 @@ export default function SavingsPage() {
       const lines = (budgets || []).flatMap(b => (b.expenseLines || []).filter(l => l.category === 'SAVINGS'))
       setInvested(lines.filter(l => isBroker(l.description)).reduce((s, l) => s + Number(l.amount), 0))
       setBudgetSavings(lines.filter(l => !isBroker(l.description)).reduce((s, l) => s + Number(l.amount), 0))
+      const incomes = (budgets || []).map(b => Number(b.totalIncome || 0)).filter(v => v > 0)
+      setAvgIncome(incomes.length ? incomes.reduce((a, v) => a + v, 0) / incomes.length : 0)
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -93,6 +96,40 @@ export default function SavingsPage() {
             <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(savingsBalance)}</span>
           </div>
         </div>
+
+        {/* Savings levels: 1) €1000 safety cushion, 2) 6 months of income, 3) 150 months of income.
+            Everything you own counts here: cash savings, goal deposits and investments. */}
+        {(() => {
+          const income = avgIncome || Number(profile?.monthlyIncome || 0)
+          const have = savingsBalance + Number(invested)
+          const levels = [
+            { n: 1, target: 1000 },
+            { n: 2, target: income * 6, months: 6 },
+            { n: 3, target: income * 150, months: 150 },
+          ]
+          return (
+            <div style={{ ...s.card, marginBottom: 16 }}>
+              <h3 style={{ ...s.cardTitle, marginBottom: 10 }}>{tr('savings.levels')}</h3>
+              {levels.map(l => {
+                const pct = l.target > 0 ? Math.min(Math.round(have / l.target * 100), 100) : 0
+                return (
+                  <div key={l.n} style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600 }}>
+                        {tr('savings.level', { n: l.n })}: {l.months ? tr('savings.monthsOfIncome', { n: l.months }) : fmt(l.target)}
+                        {pct >= 100 && ' ✓'}
+                      </span>
+                      <span>{pct}% · {fmt(have)} / {fmt(l.target)}</span>
+                    </div>
+                    <div style={{ height: 8, background: '#eee', borderRadius: 4 }}>
+                      <div style={{ height: 8, width: `${pct}%`, borderRadius: 4, background: pct >= 100 ? '#1e6b3a' : '#2a4d8f' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         {goals.length > 0 && (
           <div style={{ ...s.totalCard, background: badge.green.bg }}>
