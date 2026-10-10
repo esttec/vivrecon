@@ -185,8 +185,9 @@ class TransactionService(
         }
 
         // Refunds: a card refund carries the shop name and the exact amount of an earlier purchase.
-        // Pair them (also across months/imports) so neither inflates the budget.
-        // Works in either import order: a new refund can match an old purchase and vice versa.
+        // Nothing is deleted or hidden: the purchase stays an expense in its month, and the refund is
+        // booked in its own month as a minus expense in the same category ("Tagastus: SHOP"), so
+        // the category nets to zero and every imported row still counts towards the balance.
         val openExpenses = (saved + existing).filter { it.amount.signum() < 0 && !it.refunded }.toMutableList()
         val openCredits = (saved + existing).filter { it.amount.signum() > 0 && !it.refunded }
         for (r in openCredits.sortedBy { it.txDate }) {
@@ -194,40 +195,27 @@ class TransactionService(
                 .filter { it.amount.negate().compareTo(r.amount) == 0 && !it.txDate.isAfter(r.txDate) }
                 .filter { it.description.length >= 3 && r.description.contains(it.description, ignoreCase = true) }
                 .maxByOrNull { it.txDate } ?: continue
-            // Two old rows (imported before pairing existed) are paired too: both get a cancelling line below.
+            if (r !in saved && match !in saved) continue // both booked by an earlier import already
             openExpenses.remove(match)
-            r.refunded = true; match.refunded = true
+            r.refunded = true; match.refunded = true // "paired" marker only, so a purchase is refunded once
             txRepo.save(r); txRepo.save(match)
-            if (match !in saved && !budgetService.reduceShopLine(userId, match.txDate.toString().take(7),
-                    BudgetLineType.EXPENSE, match.description, match.amount.negate())) {
-                // Purchase was imported earlier and its line can't be found (e.g. old "Bank import (n)"): cancel it with a minus line.
-                budgetService.addLine(
-                    userId, match.txDate.toString().take(7),
-                    UpsertBudgetLineRequest(
-                        type = BudgetLineType.EXPENSE,
-                        category = match.category ?: ExpenseCategory.OTHER,
-                        description = "Refund: ${match.description}".take(255),
-                        amount = match.amount // negative → subtracts the original purchase
-                    )
-                )
+            val ym = r.txDate.toString().take(7)
+            if (r !in saved) {
+                // This refund was booked as income by an earlier import: move it over to the minus expense.
+                if (!budgetService.reduceShopLine(userId, ym, BudgetLineType.INCOME, r.description, r.amount))
+                    budgetService.addLine(userId, ym, UpsertBudgetLineRequest(BudgetLineType.INCOME, null,
+                        "Tagastus: ${match.description}".take(255), r.amount.negate()))
             }
-            if (r !in saved && !budgetService.reduceShopLine(userId, r.txDate.toString().take(7),
-                    BudgetLineType.INCOME, r.description, r.amount)) {
-                // Refund was imported earlier and counted as income: cancel it in its month.
-                budgetService.addLine(
-                    userId, r.txDate.toString().take(7),
-                    UpsertBudgetLineRequest(
-                        type = BudgetLineType.INCOME,
-                        category = null,
-                        description = "Refund matched: ${match.description}".take(255),
-                        amount = r.amount.negate()
-                    )
-                )
-            }
+            budgetService.addLine(userId, ym, UpsertBudgetLineRequest(
+                type = BudgetLineType.EXPENSE,
+                category = match.category ?: ExpenseCategory.OTHER,
+                description = "Tagastus: ${match.description}".take(255),
+                amount = r.amount.negate()
+            ))
         }
 
         // One budget line per (month, category, shop), so the user sees where the money went.
-        val expenses = saved.filter { it.amount.signum() < 0 && !it.refunded }
+        val expenses = saved.filter { it.amount.signum() < 0 } // purchases always count, refunded or not
         val grouped = expenses.groupBy {
             Triple(it.txDate.toString().take(7), it.category ?: ExpenseCategory.OTHER, it.description)
         }
