@@ -39,7 +39,7 @@ export function UserProvider({ children }) {
   // Helper: format a number in the user's currency
   function fmt(amount) {
     if (amount === null || amount === undefined || amount === '') return '—'
-    return `${currencySymbol} ${Number(amount).toLocaleString()}`
+    return `${currencySymbol} ${Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
   }
 
   return (
