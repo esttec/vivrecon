@@ -4,7 +4,8 @@ import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.YearMonth
 
-enum class BudgetLineType { INCOME, EXPENSE }
+/** PLAN = how much the month allows for a category (from a template or typed by the user); never counted as spending. */
+enum class BudgetLineType { INCOME, EXPENSE, PLAN }
 
 enum class ExpenseCategory {
     HOUSE, EATING, RESTAURANTS, TRANSPORT, CLOTHES, ENTERTAINMENT, COMMUNICATION,

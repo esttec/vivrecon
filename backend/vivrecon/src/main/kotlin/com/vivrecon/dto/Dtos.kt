@@ -186,7 +186,8 @@ data class BudgetResponse(
     val totalExpenses: BigDecimal,
     val balance: BigDecimal,
     val incomeLines: List<BudgetLineResponse>,
-    val expenseLines: List<BudgetLineResponse>
+    val expenseLines: List<BudgetLineResponse>,
+    val planLines: List<BudgetLineResponse> = emptyList()
 )
 
 data class BudgetLineResponse(

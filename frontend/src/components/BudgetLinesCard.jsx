@@ -14,6 +14,7 @@ export default function BudgetLinesCard({ category, yearMonth, planned, plannedP
   const { t: tr } = useT()
   const [lines, setLines] = useState([])
   const [income, setIncome] = useState(0)
+  const [plan, setPlan] = useState(null) // plan line for this category, if the user/template set one
   const ym = yearMonth || new Date().toISOString().slice(0, 7)
 
   useEffect(() => {
@@ -21,13 +22,15 @@ export default function BudgetLinesCard({ category, yearMonth, planned, plannedP
       .then(b => {
         setLines((b?.expenseLines || []).filter(l => l.category === category))
         setIncome(Number(b?.totalIncome || 0))
+        const pl = (b?.planLines || []).filter(l => l.category === category)
+        setPlan(pl.length ? pl.reduce((s, l) => s + Number(l.amount), 0) : null)
       })
       .catch(() => { setLines([]); setIncome(0) })
   }, [category, ym])
 
   const spent = lines.reduce((s, l) => s + Number(l.amount), 0) + Number(extraSpent || 0)
   useEffect(() => { onSpent?.(spent) }, [spent])
-  const budget = plannedPct ? Math.round(income * plannedPct) / 100 : Number(planned || 0)
+  const budget = plan != null ? plan : plannedPct ? Math.round(income * plannedPct) / 100 : Number(planned || 0)
   if (!lines.length && !budget && !extraSpent) return null
   const left = budget - spent
 
@@ -36,7 +39,7 @@ export default function BudgetLinesCard({ category, yearMonth, planned, plannedP
     <div style={{ background: '#fff', border: '1px solid #e6e6e0', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
       {budget > 0 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 15, paddingBottom: 6 }}>
-          <span>{tr('eating.budget')}{plannedPct ? ` (${plannedPct}%)` : ''}</span><span>{fmt(budget)}</span>
+          <span>{tr('eating.budget')}{plan == null && plannedPct ? ` (${plannedPct}%)` : ''}</span><span>{fmt(budget)}</span>
         </div>
       )}
       <div style={{ ...row, fontWeight: 700, color: '#9b2020' }}>

@@ -170,7 +170,7 @@ export default function BudgetPage() {
   }
 
   async function applyBudgetTemplate(name) {
-    const income = Number(tplIncome)
+    const income = Number(tplIncome) || totalIncome
     if (!income || income <= 0) { setError(tr('budget.tpl.needIncome')); return }
     if (!window.confirm(tr('budget.tpl.confirm'))) return
     try {
@@ -196,6 +196,26 @@ export default function BudgetPage() {
       [tr('common.month'), tr('common.type'), tr('budget.category'), tr('budget.description'), tr('budget.amount')],
       rows
     )
+  }
+
+  // Change how much this month allows for one category (e.g. rent 345 instead of the rule's 35 %).
+  async function editPlan(cat, current) {
+    const raw = window.prompt(tr('budget.planPrompt', { cat: tr(cat.labelKey) }), Number(current || 0).toFixed(2))
+    if (raw == null) return
+    const amount = Number(String(raw).replace(',', '.'))
+    if (!isFinite(amount) || amount < 0) return
+    const existing = (budget?.planLines ?? []).filter(l => (l.category || 'OTHER') === cat.key)
+    try {
+      if (existing.length) {
+        await apiFetch(`/api/budget/lines/${existing[0].id}`, { method: 'PUT',
+          body: JSON.stringify({ type: 'PLAN', category: cat.key, description: existing[0].description, amount }) })
+        for (const extra of existing.slice(1)) await apiFetch(`/api/budget/lines/${extra.id}`, { method: 'DELETE' })
+      } else {
+        await apiFetch(`/api/budget/${yearMonth}/lines`, { method: 'POST',
+          body: JSON.stringify({ type: 'PLAN', category: cat.key, description: tr(cat.labelKey), amount }) })
+      }
+      loadBudget()
+    } catch (e) { setError(e.message) }
   }
 
   // The user types today's real bank balance; we put the difference into one "Algsaldo" income
@@ -232,7 +252,12 @@ export default function BudgetPage() {
 
   // Planned amounts from profile (reference only)
   const savingsPct = Number(profile?.savingsTargetPercent ?? 0)
+  // Plan lines (from a template or typed by the user) win over the automatic rule.
+  const planByCategory = (budget?.planLines ?? []).reduce((acc, l) => {
+    acc[l.category || 'OTHER'] = (acc[l.category || 'OTHER'] || 0) + Number(l.amount); return acc
+  }, {})
   function plannedFor(cat) {
+    if (planByCategory[cat.key] != null) return planByCategory[cat.key]
     // Premium: 50/30/20 from this month's income (home 35 %, food 15 %, savings 20 %).
     if (premium && RULE_PCT[cat.key]) return totalIncome > 0 ? Math.round(totalIncome * RULE_PCT[cat.key]) / 100 : 0
     if (cat.profileField === '_food15') return totalIncome > 0 ? Math.round(totalIncome * 15) / 100 : 0 // food = 15 % of income, same as the Food page
@@ -510,7 +535,12 @@ export default function BudgetPage() {
                             </span>
                             {planned > 0 && (
                               <span style={{ fontSize: 11, color: t.navyLight, marginLeft: 6 }}>
-                                {fmt(actual)} / {fmt(planned)}{premium && RULE_PCT[cat.key] ? ` · ${RULE_PCT[cat.key]}%` : ''}
+                                {fmt(actual)} /{' '}
+                                <button onClick={() => editPlan(cat, planned)} title={tr('budget.editPlan')}
+                                  style={{ background: 'none', border: 'none', padding: 0, color: t.navyMid, fontSize: 11, cursor: 'pointer', textDecoration: 'underline dotted' }}>
+                                  {fmt(planned)}
+                                </button>
+                                {premium && RULE_PCT[cat.key] && planByCategory[cat.key] == null ? ` · ${RULE_PCT[cat.key]}%` : ''}
                               </span>
                             )}
                           </div>

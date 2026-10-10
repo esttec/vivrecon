@@ -10,7 +10,8 @@ import { t, badge } from '../theme'
 export default function SavingsPage() {
   const isMobile = useIsMobile()
   const { fmt, profile } = useUser()
-  const [avgIncome, setAvgIncome] = useState(0) // average monthly income from the budget months
+  const [avgIncome, setAvgIncome] = useState(0)
+  const [leftover, setLeftover] = useState(0)   // unspent money of finished months // average monthly income from the budget months
   const { t: tr } = useT()
 
   const [goals, setGoals]     = useState([])
@@ -39,6 +40,10 @@ export default function SavingsPage() {
       const lines = (budgets || []).flatMap(b => (b.expenseLines || []).filter(l => l.category === 'SAVINGS'))
       setInvested(lines.filter(l => isBroker(l.description)).reduce((s, l) => s + Number(l.amount), 0))
       setBudgetSavings(lines.filter(l => !isBroker(l.description)).reduce((s, l) => s + Number(l.amount), 0))
+      // Month-end rule: whatever a finished month didn't spend counts as savings.
+      const thisMonth = new Date().toISOString().slice(0, 7)
+      setLeftover((budgets || []).filter(b => b.yearMonth < thisMonth)
+        .reduce((s, b) => s + Number(b.totalIncome || 0) - Number(b.totalExpenses || 0), 0))
       const incomes = (budgets || []).map(b => Number(b.totalIncome || 0)).filter(v => v > 0)
       setAvgIncome(incomes.length ? incomes.reduce((a, v) => a + v, 0) / incomes.length : 0)
     } catch (e) { setError(e.message) }
@@ -69,7 +74,7 @@ export default function SavingsPage() {
 
   const totalSaved = goals.reduce((sum, g) => sum + Number(g.savedAmount), 0)
   // Money set aside = budget savings lines + deposits into goals
-  const savingsBalance = Number(budgetSavings) + totalSaved
+  const savingsBalance = Number(budgetSavings) + totalSaved + Math.max(0, leftover)
 
   return (
     <PageShell>
@@ -96,6 +101,12 @@ export default function SavingsPage() {
             <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(savingsBalance)}</span>
           </div>
         </div>
+
+        {leftover > 0 && (
+          <p style={{ fontSize: 13, color: t.navyLight, margin: '-6px 0 14px', textAlign: 'center' }}>
+            {tr('savings.leftover')}: <b style={{ color: '#1e6b3a' }}>{fmt(leftover)}</b>
+          </p>
+        )}
 
         {/* Savings levels: 1) €1000 safety cushion, 2) 6 months of income, 3) 150 months of income.
             Everything you own counts here: cash savings, goal deposits and investments. */}

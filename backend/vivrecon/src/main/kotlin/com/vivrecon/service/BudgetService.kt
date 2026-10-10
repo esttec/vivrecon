@@ -108,16 +108,11 @@ class BudgetService(
         val budget = budgetRepo.findByUserIdAndYearMonth(userId, yearMonth).orElseGet {
             budgetRepo.save(BudgetEntity(user = user, yearMonth = yearMonth))
         }
-        // A template defines the whole month, so replace any existing lines.
-        lineRepo.deleteAll(lineRepo.findAllByBudgetId(budget.id))
+        // A template is a PLAN: it replaces only the month's plan lines. Real income and imported
+        // expenses are never touched, and the plan doesn't count as spending.
+        lineRepo.deleteAll(lineRepo.findAllByBudgetIdAndType(budget.id, BudgetLineType.PLAN))
 
         val income = req.monthlyIncome.setScale(2, RoundingMode.HALF_UP)
-        lineRepo.save(
-            BudgetLineEntity(
-                budget = budget, type = BudgetLineType.INCOME, category = null,
-                description = "Monthly income", amount = income
-            )
-        )
         var allocated = BigDecimal.ZERO
         buckets.forEachIndexed { i, b ->
             val amount = if (i == buckets.lastIndex)
@@ -127,7 +122,7 @@ class BudgetService(
             allocated = allocated.add(amount)
             lineRepo.save(
                 BudgetLineEntity(
-                    budget = budget, type = BudgetLineType.EXPENSE, category = b.category,
+                    budget = budget, type = BudgetLineType.PLAN, category = b.category,
                     description = b.label, amount = amount
                 )
             )
@@ -138,9 +133,11 @@ class BudgetService(
 
     private data class TemplateBucket(val label: String, val category: ExpenseCategory, val pct: Int)
     private val TEMPLATES = mapOf(
+        // 50 % needs = 35 % home + 15 % food; 30 % wants (shared, booked under OTHER); 20 % savings.
         "FIFTY_THIRTY_TWENTY" to listOf(
-            TemplateBucket("Needs (50%)", ExpenseCategory.OTHER, 50),
-            TemplateBucket("Wants (30%)", ExpenseCategory.ENTERTAINMENT, 30),
+            TemplateBucket("Home (35%)", ExpenseCategory.HOUSE, 35),
+            TemplateBucket("Food (15%)", ExpenseCategory.EATING, 15),
+            TemplateBucket("Wants (30%)", ExpenseCategory.OTHER, 30),
             TemplateBucket("Savings (20%)", ExpenseCategory.SAVINGS, 20),
         ),
         "PAY_YOURSELF_FIRST" to listOf(
@@ -183,7 +180,8 @@ class BudgetService(
             totalExpenses = totalExpenses,
             balance = totalIncome - totalExpenses,
             incomeLines = lines.filter { it.type == BudgetLineType.INCOME }.map { it.toDto() },
-            expenseLines = lines.filter { it.type == BudgetLineType.EXPENSE }.map { it.toDto() }
+            expenseLines = lines.filter { it.type == BudgetLineType.EXPENSE }.map { it.toDto() },
+            planLines = lines.filter { it.type == BudgetLineType.PLAN }.map { it.toDto() }
         )
     }
 
