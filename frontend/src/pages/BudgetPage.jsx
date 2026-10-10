@@ -372,8 +372,8 @@ export default function BudgetPage() {
                   </div>
                 )}
 
-                {/* ── BUDGET TEMPLATES ── */}
-                <div style={s.card}>
+                {/* ── BUDGET TEMPLATES ── (hidden once this month has a plan; edit plans by clicking amounts) */}
+                {!(budget.planLines ?? []).length && <div style={s.card}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showTpl ? 12 : 0 }}>
                     <div>
                       <h2 style={s.cardTitle}>{tr('budget.tpl.title')}</h2>
@@ -397,7 +397,7 @@ export default function BudgetPage() {
                       <p style={{ ...s.muted, marginTop: 8 }}>{tr('budget.tpl.note')}</p>
                     </div>
                   )}
-                </div>
+                </div>}
 
                 {/* ── INCOME SECTION ── */}
                 <div style={s.card}>
