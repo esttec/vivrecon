@@ -40,7 +40,9 @@ export default function BudgetLinesCard({ category, yearMonth, planned, plannedP
         </div>
       )}
       <div style={{ ...row, fontWeight: 700, color: '#9b2020' }}>
-        <span>{tr('budget.spent')}</span><span>{fmt(spent)}</span>
+        <span>{tr('budget.spent')}</span>
+        <span>{budget > 0 ? `${Math.round(spent / budget * 100)}%` : fmt(spent)}
+          {budget > 0 && <span style={{ fontWeight: 500, fontSize: 12, marginLeft: 6 }}>({fmt(spent)})</span>}</span>
       </div>
       {lines.map(l => (
         <div key={l.id} style={{ ...row, paddingLeft: 12 }}>

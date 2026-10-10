@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import { parseStatement } from '../utils/importTransactions'
 import Ico from '../components/Icon'
 import PageShell from '../components/PageShell'
+import { RULE_PCT, GROUP_PCT, groupOf } from '../utils/budgetRule'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../context/UserContext'
 import { useT } from '../i18n'
@@ -232,6 +233,8 @@ export default function BudgetPage() {
   // Planned amounts from profile (reference only)
   const savingsPct = Number(profile?.savingsTargetPercent ?? 0)
   function plannedFor(cat) {
+    // Premium: 50/30/20 from this month's income (home 35 %, food 15 %, savings 20 %).
+    if (premium && RULE_PCT[cat.key]) return totalIncome > 0 ? Math.round(totalIncome * RULE_PCT[cat.key]) / 100 : 0
     if (cat.profileField === '_food15') return totalIncome > 0 ? Math.round(totalIncome * 15) / 100 : 0 // food = 15 % of income, same as the Food page
     if (cat.profileField === '_savings') return totalIncome > 0 && savingsPct > 0 ? totalIncome * savingsPct / 100 : 0
     if (!cat.profileField) return 0
@@ -455,6 +458,23 @@ export default function BudgetPage() {
                     </div>
                   )}
 
+                  {premium && totalIncome > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 14 }}>
+                      {['needs', 'wants', 'savings'].map(g => {
+                        const plan = totalIncome * GROUP_PCT[g] / 100
+                        const used = Object.entries(actualByCategory).filter(([c]) => groupOf(c) === g).reduce((s, [, v]) => s + v, 0)
+                        const p = plan > 0 ? Math.round(used / plan * 100) : 0
+                        return (
+                          <div key={g} style={{ background: '#f7f7f3', borderRadius: 10, padding: '8px 10px' }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: t.navyLight, textTransform: 'uppercase' }}>{tr('budget.group.' + g)} {GROUP_PCT[g]}%</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: p > 100 ? '#c0392b' : t.navy }}>{p}%</div>
+                            <div style={{ fontSize: 11, color: t.navyLight }}>{fmt(used)} / {fmt(plan)}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
                   {/* Category breakdown rows */}
                   {EXPENSE_CATEGORIES.map(cat => {
                     const actual  = actualByCategory[cat.key] || 0
@@ -486,11 +506,11 @@ export default function BudgetPage() {
 
                           <div style={{ textAlign: 'right', flexShrink: 0, minWidth: isMobile ? 0 : 180 }}>
                             <span style={{ fontSize: 14, fontWeight: 700, color: over ? '#c0392b' : t.navy }}>
-                              {fmt(actual)}
+                              {planned > 0 ? `${Math.round(actual / planned * 100)}%` : fmt(actual)}
                             </span>
                             {planned > 0 && (
                               <span style={{ fontSize: 11, color: t.navyLight, marginLeft: 6 }}>
-                                / {fmt(planned)}
+                                {fmt(actual)} / {fmt(planned)}{premium && RULE_PCT[cat.key] ? ` · ${RULE_PCT[cat.key]}%` : ''}
                               </span>
                             )}
                           </div>

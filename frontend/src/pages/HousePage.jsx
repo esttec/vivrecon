@@ -24,7 +24,7 @@ const TYPE_BADGE = {
 
 export default function HousePage() {
   const isMobile = useIsMobile()
-  const { profile, fmt } = useUser()
+  const { profile, fmt, premium } = useUser()
   const { t: tr } = useT()
   const [yearMonth, setYearMonth] = useState(thisMonth())
   const [expenses, setExpenses]   = useState([])
@@ -106,7 +106,7 @@ export default function HousePage() {
           </div>
         </div>
 
-        <BudgetLinesCard category="HOUSE" yearMonth={yearMonth} planned={Number(profile?.rentBudget || 0)} extraSpent={total} />
+        <BudgetLinesCard category="HOUSE" yearMonth={yearMonth} plannedPct={premium ? 35 : undefined} planned={Number(profile?.rentBudget || 0)} extraSpent={total} />
 
         {error && <p style={s.error}>{error}</p>}
 
