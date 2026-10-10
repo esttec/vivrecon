@@ -98,7 +98,7 @@ export default function SavingsPage() {
           </div>
           <div style={s.acctCol}>
             <span style={s.acctLabel}>{tr('savings.available')}</span>
-            <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(savingsBalance)}</span>
+            <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(savingsBalance + Number(invested))}</span>
           </div>
         </div>
 
