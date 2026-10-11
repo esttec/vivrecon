@@ -52,6 +52,8 @@ class GoogleTokenVerifier(
             ?: throw IllegalArgumentException("Missing sub in Google token")
         val email = json.get("email")?.asText()
             ?: throw IllegalArgumentException("Missing email in Google token")
+        // Accounts are linked by email, so only accept addresses Google has verified
+        require(json.get("email_verified")?.asText() == "true") { "Google email not verified" }
         val name = json.get("name")?.asText()
         val picture = json.get("picture")?.asText()
 

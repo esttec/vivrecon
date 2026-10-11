@@ -27,6 +27,10 @@ services:
       STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY}
       STRIPE_PRICE_YEARLY: ${STRIPE_PRICE_YEARLY}
       APP_BASE_URL: https://vivrecon.com
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
     restart: unless-stopped
 
   web:

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { loginWithEmail, registerWithEmail } from '../api/auth'
+import { useEffect, useRef, useState } from 'react'
+import { loginWithEmail, registerWithEmail, loginWithSocial, getSocialConfig } from '../api/auth'
 import { t } from '../theme'
 
 // ── Social login button icons (inline SVG) ───────────────────────────────────
@@ -33,6 +33,20 @@ function AppleIcon() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const SDK = {
+  google:   'https://accounts.google.com/gsi/client',
+  facebook: 'https://connect.facebook.net/en_US/sdk.js',
+  apple:    'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js',
+}
+function loadScript(src) {
+  return new Promise((ok, fail) => {
+    if (document.querySelector(`script[src="${src}"]`)) return ok()
+    const el = document.createElement('script')
+    el.src = src; el.async = true; el.onload = () => ok(); el.onerror = fail
+    document.head.appendChild(el)
+  })
+}
+
 export default function LoginPage() {
   const [mode,       setMode]       = useState('login')   // 'login' | 'register'
   const [email,      setEmail]      = useState('')
@@ -43,6 +57,57 @@ export default function LoginPage() {
   const [error,      setError]      = useState('')
   const [success,    setSuccess]    = useState('')
   const [forgotSent, setForgotSent] = useState(false)
+
+  const [social, setSocial] = useState({})
+  const googleRef = useRef(null)
+
+  function finishLogin(data) {
+    localStorage.setItem('accessToken',  data.accessToken)
+    localStorage.setItem('refreshToken', data.refreshToken)
+    window.location.href = localStorage.getItem('onboardingCompleted') ? '/budget' : '/onboarding'
+  }
+
+  async function socialLogin(provider, body) {
+    setError('')
+    try { finishLogin(await loginWithSocial(provider, body)) }
+    catch (err) { setError(err.message || 'Sign-in failed') }
+  }
+
+  // Load the provider SDKs up front so the popups open straight from the click (no popup blocker).
+  useEffect(() => {
+    getSocialConfig().then(cfg => {
+      setSocial(cfg)
+      if (cfg.facebook) loadScript(SDK.facebook).then(() =>
+        window.FB.init({ appId: cfg.facebook, version: 'v19.0', cookie: false, xfbml: false }))
+      if (cfg.apple) loadScript(SDK.apple).then(() =>
+        window.AppleID.auth.init({ clientId: cfg.apple, scope: 'name email', redirectURI: window.location.origin + '/login', usePopup: true }))
+    })
+  }, [])
+
+  // Google draws its own button into googleRef, which exists only once the config has arrived.
+  useEffect(() => {
+    if (!social.google) return
+    loadScript(SDK.google).then(() => {
+      window.google.accounts.id.initialize({ client_id: social.google, callback: r => socialLogin('google', { idToken: r.credential }) })
+      if (googleRef.current) window.google.accounts.id.renderButton(googleRef.current, {
+        theme: 'outline', size: 'large', text: 'continue_with', width: Math.min(400, googleRef.current.offsetWidth || 300),
+      })
+    })
+  }, [social.google])
+
+  function facebookLogin() {
+    if (!window.FB) return
+    window.FB.login(r => { if (r.authResponse) socialLogin('facebook', { accessToken: r.authResponse.accessToken }) }, { scope: 'email' })
+  }
+
+  async function appleLogin() {
+    if (!window.AppleID) return
+    try {
+      const r = await window.AppleID.auth.signIn()
+      const n = r.user?.name
+      socialLogin('apple', { identityToken: r.authorization.id_token, fullName: n ? `${n.firstName ?? ''} ${n.lastName ?? ''}`.trim() : null })
+    } catch (err) { if (err?.error !== 'popup_closed_by_user') setError('Apple sign-in failed') }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -193,9 +258,11 @@ export default function LoginPage() {
 
           {/* ── Social login buttons ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <SocialBtn Icon={GoogleIcon}   label="Continue with Google"   bg="#fff"     color="#3c4043" border="#dadce0" />
-            <SocialBtn Icon={FacebookIcon} label="Continue with Facebook"  bg="#1877f2"  color="#fff"    border="#1877f2" />
-            <SocialBtn Icon={AppleIcon}    label="Continue with Apple"     bg="#000"     color="#fff"    border="#000"    />
+            {social.google
+              ? <div ref={googleRef} style={{ display: 'flex', justifyContent: 'center', minHeight: 44 }} />
+              : <SocialBtn Icon={GoogleIcon} label="Continue with Google" bg="#fff" color="#3c4043" border="#dadce0" />}
+            <SocialBtn Icon={FacebookIcon} label="Continue with Facebook"  bg="#1877f2"  color="#fff"    border="#1877f2" onClick={social.facebook ? facebookLogin : undefined} />
+            <SocialBtn Icon={AppleIcon}    label="Continue with Apple"     bg="#000"     color="#fff"    border="#000"    onClick={social.apple ? appleLogin : undefined} />
           </div>
 
           {/* ── Terms & Conditions ── */}
@@ -214,7 +281,7 @@ export default function LoginPage() {
 
 // ── Social button component ───────────────────────────────────────────────────
 
-function SocialBtn({ Icon, label, bg, color, border }) {
+function SocialBtn({ Icon, label, bg, color, border, onClick }) {
   const [hov, setHov] = useState(false)
   return (
     <button
@@ -228,16 +295,16 @@ function SocialBtn({ Icon, label, bg, color, border }) {
       }}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      onClick={e => e.preventDefault()}
-      title="Coming soon">
+      onClick={e => { e.preventDefault(); onClick?.() }}
+      title={onClick ? label : 'Coming soon'}>
       <Icon />
       {label}
-      <span style={{
+      {!onClick && <span style={{
         fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase',
         padding: '2px 6px', borderRadius: 5, marginLeft: 2,
         background: color === '#fff' ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.08)',
         color, opacity: 0.85,
-      }}>Coming soon</span>
+      }}>Coming soon</span>}
     </button>
   )
 }

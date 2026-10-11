@@ -40,6 +40,14 @@ class AuthController(
 
     // ── Social Auth ───────────────────────────────────────────────────────────
 
+    /** Public client IDs for the web login buttons; blank = provider not set up yet. */
+    @GetMapping("/social/config")
+    fun socialConfig(
+        @org.springframework.beans.factory.annotation.Value("\${vivrecon.oauth.google.client-id:}") google: String,
+        @org.springframework.beans.factory.annotation.Value("\${vivrecon.oauth.facebook.app-id:}") facebook: String,
+        @org.springframework.beans.factory.annotation.Value("\${vivrecon.oauth.apple.client-id:}") apple: String,
+    ): Map<String, String> = mapOf("google" to google, "facebook" to facebook, "apple" to apple)
+
     /**
      * POST /api/auth/social/google
      * Body: { "idToken": "<Google ID token from mobile SDK>" }

@@ -24,3 +24,16 @@ export async function registerWithEmail(email, password) {
   })
   return parseResponse(res, 'Registration failed')
 }
+export async function loginWithSocial(provider, body) {
+  const res = await fetch(`/api/auth/social/${provider}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  return parseResponse(res, 'Sign-in failed')
+}
+
+// Public client IDs; an empty value means that provider is not set up on the server yet.
+export async function getSocialConfig() {
+  try { const res = await fetch('/api/auth/social/config'); return res.ok ? await res.json() : {} } catch { return {} }
+}
