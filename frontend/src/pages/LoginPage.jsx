@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { loginWithEmail, registerWithEmail, loginWithSocial, getSocialConfig } from '../api/auth'
+import { loginWithEmail, registerWithEmail, loginWithSocial, getSocialConfig, requestPasswordReset, resetPassword } from '../api/auth'
 import { t } from '../theme'
 
 // ── Social login button icons (inline SVG) ───────────────────────────────────
@@ -151,16 +151,50 @@ export default function LoginPage() {
     setForgotSent(false)
   }
 
-  function handleForgotPassword(e) {
+  async function handleForgotPassword(e) {
     e.preventDefault()
     if (!email) {
       setError('Enter your email address above, then click Forgot password.')
       return
     }
-    // TODO: call /api/auth/forgot-password when backend supports it
-    setForgotSent(true)
     setError('')
+    try { await requestPasswordReset(email); setForgotSent(true) }
+    catch { setError('Could not send the reset link. Try again.') }
   }
+
+  // Opened from the email link: /login?reset=<token>
+  const resetToken = new URLSearchParams(window.location.search).get('reset')
+  async function handleReset(e) {
+    e.preventDefault()
+    setError(''); setSuccess('')
+    if (password !== confirm) { setError('Passwords do not match'); return }
+    setLoading(true)
+    try {
+      await resetPassword(resetToken, password)
+      window.history.replaceState(null, '', '/login')
+      setPassword(''); setConfirm(''); setMode('login')
+      setSuccess('Password changed. Sign in with your new password.')
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
+  }
+
+  if (resetToken) return (
+    <div style={s.page}>
+      <div style={s.right}>
+        <form style={s.formBox} onSubmit={handleReset}>
+          <h2 style={{ color: t.navy, marginTop: 0 }}>Choose a new password</h2>
+          <label style={s.label}>New password</label>
+          <input style={s.input} type="password" required minLength={8} autoComplete="new-password"
+            value={password} onChange={e => setPassword(e.target.value)} />
+          <label style={s.label}>Confirm password</label>
+          <input style={s.input} type="password" required minLength={8} autoComplete="new-password"
+            value={confirm} onChange={e => setConfirm(e.target.value)} />
+          {error && <p style={s.errorMsg}>{error}</p>}
+          <button style={{ ...s.submitBtn, opacity: loading ? 0.7 : 1 }} type="submit" disabled={loading}>Save new password</button>
+        </form>
+      </div>
+    </div>
+  )
 
   return (
     <div style={s.page}>

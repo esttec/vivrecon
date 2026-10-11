@@ -18,6 +18,15 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASS:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -60,6 +69,12 @@ logging:
     com.vivrecon: DEBUG
     org.springframework.security: INFO
 
+# Mail is optional (password reset falls back to the server log), so it must not mark the app unhealthy.
+management:
+  health:
+    mail:
+      enabled: false
+
 ---
 # ── Dev profile: H2 in-memory, no Postgres needed ────────────────────────────
 spring:
@@ -82,3 +97,4 @@ spring:
 
   flyway:
     enabled: false
+

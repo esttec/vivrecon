@@ -37,3 +37,16 @@ export async function loginWithSocial(provider, body) {
 export async function getSocialConfig() {
   try { const res = await fetch('/api/auth/social/config'); return res.ok ? await res.json() : {} } catch { return {} }
 }
+
+export async function requestPasswordReset(email) {
+  await fetch('/api/auth/forgot-password', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+  })
+}
+
+export async function resetPassword(token, password) {
+  const res = await fetch('/api/auth/reset-password', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }),
+  })
+  return parseResponse(res, 'Could not reset the password')
+}

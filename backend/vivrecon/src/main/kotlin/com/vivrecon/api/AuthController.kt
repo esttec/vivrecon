@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService,
-    private val oAuthService: OAuthService
+    private val oAuthService: OAuthService,
+    private val passwordResetService: com.vivrecon.service.PasswordResetService
 ) {
 
     // ── Email / Password ──────────────────────────────────────────────────────
@@ -35,6 +36,18 @@ class AuthController(
     @PostMapping("/logout")
     fun logout(): ResponseEntity<Void> {
         authService.logout(currentUserId())
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@RequestBody body: Map<String, String>): ResponseEntity<Void> {
+        passwordResetService.requestReset(body["email"] ?: "")
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/reset-password")
+    fun resetPassword(@RequestBody body: Map<String, String>): ResponseEntity<Void> {
+        passwordResetService.reset(body["token"] ?: "", body["password"] ?: "")
         return ResponseEntity.noContent().build()
     }
 
