@@ -166,7 +166,6 @@ export default function SavingsPage() {
         )}
 
         {loading && <p style={s.muted}>{tr('common.loading')}</p>}
-        {!loading && goals.length === 0 && <div style={s.empty}>{tr('savings.empty')}</div>}
 
         {goals.map(g => {
           const pct = Number(g.targetAmount) > 0 ? Math.min(Math.round(Number(g.savedAmount) / Number(g.targetAmount) * 100), 100) : 0
