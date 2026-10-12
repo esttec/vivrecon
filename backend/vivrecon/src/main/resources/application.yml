@@ -24,7 +24,7 @@ spring:
     username: ${SMTP_USER:}
     password: ${SMTP_PASS:}
     properties:
-      mail.smtp.auth: true
+      mail.smtp.auth: ${SMTP_AUTH:true}
       mail.smtp.starttls.enable: true
 
   flyway:

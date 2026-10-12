@@ -35,7 +35,20 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
       MAIL_FROM: ${MAIL_FROM:-}
+    restart: unless-stopped
+
+  # Own outgoing mail server (send-only, signs mail with DKIM). The backend reaches it as host "mail".
+  mail:
+    image: boky/postfix:latest
+    hostname: mail.vivrecon.com
+    environment:
+      ALLOWED_SENDER_DOMAINS: vivrecon.com
+      POSTFIX_myhostname: mail.vivrecon.com
+      DKIM_AUTOGENERATE: "true"
+    volumes:
+      - dkim_keys:/etc/opendkim/keys
     restart: unless-stopped
 
   web:
@@ -59,6 +72,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  dkim_keys:
   pg_data:
   caddy_data:
   caddy_config:
