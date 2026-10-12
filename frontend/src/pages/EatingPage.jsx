@@ -159,36 +159,21 @@ export default function EatingPage() {
     finally { setSavingMenu(false) }
   }
 
-  // ── Receipt scanning (on-device OCR) ────────────────────────────────────────
-
-  // Load Tesseract.js from a CDN on first use.
-  function loadTesseract() {
-    if (window.Tesseract) return Promise.resolve(window.Tesseract)
+  // ── Receipt scanning: the photo is shrunk here and read by the AI on the server ──
+  function shrinkImage(file, max = 1600) {
     return new Promise((resolve, reject) => {
-      const s = document.createElement('script')
-      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
-      s.onload = () => resolve(window.Tesseract)
-      s.onerror = reject
-      document.head.appendChild(s)
+      const img = new Image()
+      img.onload = () => {
+        const k = Math.min(1, max / Math.max(img.width, img.height))
+        const c = document.createElement('canvas')
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k)
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+        URL.revokeObjectURL(img.src)
+        resolve(c.toDataURL('image/jpeg', 0.85).split(',')[1])
+      }
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
     })
-  }
-
-  // Turn OCR text into basket items: keep lines that end in a price.
-  function parseReceipt(text) {
-    const priceRe = /(\d{1,3}[.,]\d{2})\s*[€A-Za-z]?\s*$/
-    const skip = /summa|kokku|total|sum|kaart|sularaha|tagasi|käibemaks|\bkm\b|vat|balance|change/i
-    const items = []
-    for (const raw of text.split('\n')) {
-      const line = raw.trim()
-      const m = line.match(priceRe)
-      if (!m) continue
-      const price = parseFloat(m[1].replace(',', '.'))
-      if (!price || price > 500) continue
-      const name = line.slice(0, m.index).replace(/[.\-–·*x×]+$/i, '').trim()
-      if (name.length < 2 || skip.test(name)) continue
-      items.push({ name, qty: '', price: price.toFixed(2), per: 1 })
-    }
-    return items
   }
 
   async function handleReceipt(e) {
@@ -197,14 +182,14 @@ export default function EatingPage() {
     if (!file) return
     setScanning(true); setError('')
     try {
-      const Tesseract = await loadTesseract()
-      const { data } = await Tesseract.recognize(file, 'eng+est')
-      const items = parseReceipt(data.text || '')
+      const image = await shrinkImage(file)
+      const lines = await apiFetch('/api/ai/receipt', { method: 'POST', body: JSON.stringify({ image, mimeType: 'image/jpeg' }) })
+      const items = (lines || []).map(l => ({ name: l.name, qty: '', price: Number(l.price).toFixed(2), per: 1 }))
       if (!items.length) { setError(tr('eating.scanFailed')); return }
       setDraft(items)
       setShowPlanForm(false)
-    } catch {
-      setError(tr('eating.scanFailed'))
+    } catch (err) {
+      setError(err.message || tr('eating.scanFailed'))
     } finally {
       setScanning(false)
     }

@@ -56,6 +56,33 @@ class AiService(
         return text?.takeIf { it.isNotBlank() } ?: "Sorry, I couldn't come up with an answer."
     }
 
+    /** Reads a shop receipt photo and returns its product lines as name + price. */
+    fun readReceipt(imageBase64: String, mimeType: String): List<Map<String, Any>> {
+        if (apiKey.isBlank()) throw IllegalStateException("Receipt reading is not configured. Set GEMINI_API_KEY on the server.")
+        require(imageBase64.isNotBlank() && imageBase64.length < 10_000_000) { "Image missing or too large" }
+        require(mimeType.startsWith("image/")) { "Not an image" }
+        val prompt = "This is a photo of a shop receipt (often Estonian). List every purchased product line. " +
+            "Return ONLY a JSON array like [{\"name\":\"Piim 2.5%\",\"price\":1.29}] where price is the line total in euros. " +
+            "Skip totals, VAT, discounts summary, payment and change lines. Return [] if it is not a receipt."
+        val body = objectMapper.writeValueAsString(mapOf(
+            "contents" to listOf(mapOf("parts" to listOf(
+                mapOf("inline_data" to mapOf("mime_type" to mimeType, "data" to imageBase64)),
+                mapOf("text" to prompt)))),
+            "generationConfig" to mapOf("responseMimeType" to "application/json")))
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .build()
+        val response = http.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() !in 200..299) throw IllegalStateException("AI service error (${response.statusCode()}). Please try again.")
+        val text = objectMapper.readTree(response.body()).path("candidates").firstOrNull()
+            ?.path("content")?.path("parts")?.firstOrNull()?.path("text")?.asText() ?: return emptyList()
+        val arr = try { objectMapper.readTree(text) } catch (e: Exception) { return emptyList() }
+        return arr.filter { it.path("name").asText().isNotBlank() && it.path("price").isNumber }
+            .map { mapOf("name" to it.path("name").asText(), "price" to it.path("price").asDouble()) }
+    }
+
     /** A compact summary of the current month so answers are personalised. */
     private fun financialContext(userId: Long): String {
         val ym = LocalDate.now().toString().substring(0, 7)
