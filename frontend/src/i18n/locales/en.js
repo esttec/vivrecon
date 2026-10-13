@@ -447,4 +447,5 @@ export default {
   'savings.balance': 'Balance',
   'savings.takenOut': 'Taken out',
   'savings.available': 'Available',
+  'eating.receipt': 'Receipt',
 }

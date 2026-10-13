@@ -403,4 +403,5 @@ export default {
   "dkind.PERSONAL": "Личный долг",
   "dkind.OTHER": "Другое",
   "common.edit": "Изменить",
+  'eating.receipt': 'Чек',
 }

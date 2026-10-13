@@ -51,4 +51,5 @@ export default {
   "dkind.PERSONAL": "Isiklik võlg",
   "dkind.OTHER": "Muu",
   "common.edit": "Muuda",
+  'eating.receipt': 'Tšekk',
 }

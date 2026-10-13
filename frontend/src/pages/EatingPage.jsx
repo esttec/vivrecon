@@ -36,6 +36,7 @@ export default function EatingPage() {
   // Auto-generated weekly menu (editable draft before saving)
   const [draft, setDraft]           = useState(null) // [{ b, l, d }, ×7] or null
   const [savingMenu, setSavingMenu] = useState(false)
+  const [budgetKey, setBudgetKey] = useState(0) // bump to reload the budget card
   const [scanning, setScanning]     = useState(false)
   const fileRef = useRef(null)
 
@@ -183,9 +184,19 @@ export default function EatingPage() {
     setScanning(true); setError('')
     try {
       const image = await shrinkImage(file)
-      const lines = await apiFetch('/api/ai/receipt', { method: 'POST', body: JSON.stringify({ image, mimeType: 'image/jpeg' }) })
-      const items = (lines || []).map(l => ({ name: l.name, qty: '', price: Number(l.price).toFixed(2), per: 1 }))
+      const r = await apiFetch('/api/ai/receipt', { method: 'POST', body: JSON.stringify({ image, mimeType: 'image/jpeg' }) })
+      const items = (r?.items || []).map(l => ({ name: l.name, qty: '', price: Number(l.price).toFixed(2), per: 1 }))
       if (!items.length) { setError(tr('eating.scanFailed')); return }
+      // Book the purchase as food spending. If the bank import brings the same payment later
+      // (or brought it already), the server recognises it and counts it only once.
+      const total = r.total || items.reduce((a, i) => a + Number(i.price), 0)
+      await apiFetch('/api/transactions/import', { method: 'POST', body: JSON.stringify({ items: [{
+        date: r.date || new Date().toISOString().slice(0, 10),
+        description: r.shop || tr('eating.receipt'),
+        amount: -Math.round(total * 100) / 100,
+        source: 'receipt', category: 'EATING',
+      }] }) })
+      setBudgetKey(k => k + 1)
       setDraft(items)
       setShowPlanForm(false)
     } catch (err) {
@@ -210,7 +221,7 @@ export default function EatingPage() {
 
         {error && <p style={s.error}>{error}</p>}
         {loading && <p style={s.muted}>{tr('common.loading')}</p>}
-        <BudgetLinesCard category="EATING" plannedPct={15} />
+        <BudgetLinesCard key={budgetKey} category="EATING" plannedPct={15} />
 
         {/* ── MEAL PLANS ── */}
         {tab === 'plans' && !loading && (

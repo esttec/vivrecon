@@ -16,7 +16,7 @@ class AiController(private val aiService: AiService) {
 
     /** Body: { "image": "<base64>", "mimeType": "image/jpeg" } */
     @PostMapping("/receipt")
-    fun receipt(@RequestBody body: Map<String, String>): List<Map<String, Any>> {
+    fun receipt(@RequestBody body: Map<String, String>): Map<String, Any?> {
         currentUserId() // must be signed in
         return aiService.readReceipt(body["image"] ?: "", body["mimeType"] ?: "image/jpeg")
     }

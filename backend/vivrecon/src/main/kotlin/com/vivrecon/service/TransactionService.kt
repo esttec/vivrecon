@@ -160,17 +160,40 @@ class TransactionService(
 
         val myShops = budgetService.shopCategories(userId) // categories the user picked earlier
         val saved = mutableListOf<TransactionEntity>()
+        // A scanned receipt and the bank row for the same card payment are one purchase:
+        // same amount, dates at most 3 days apart (the bank books card payments a day or two later).
+        fun samePurchase(a: TransactionEntity, date: java.time.LocalDate, amount: BigDecimal) =
+            a.amount.compareTo(amount) == 0 && kotlin.math.abs(a.txDate.toEpochDay() - date.toEpochDay()) <= 3
+        val openReceipts = existing.filter { it.bankRef?.startsWith(RECEIPT) == true }.toMutableList()
+        val usedBankRows = mutableSetOf<Long>()
         for (item in req.items) {
             if (item.amount.compareTo(BigDecimal.ZERO) == 0) continue
+            val date = TxRules.parseDate(item.date)
+            val isReceipt = item.source == "receipt"
             // 1) The bank's id is the reliable check: seen before (or twice in this file) → already registered.
-            val ref = item.ref?.trim()?.takeIf { it.isNotEmpty() }?.take(64)
+            val ref = if (isReceipt) "$RECEIPT${java.util.UUID.randomUUID()}".take(64)
+                      else item.ref?.trim()?.takeIf { it.isNotEmpty() }?.take(64)
             if (ref != null && !knownRefs.add(ref)) continue
+            if (isReceipt) {
+                // The bank import already brought this payment → it is counted, don't add it twice.
+                val bankRow = existing.firstOrNull { it.id !in usedBankRows && it.bankRef != null &&
+                    !it.bankRef!!.startsWith(RECEIPT) && samePurchase(it, date, item.amount) }
+                if (bankRow != null) { usedBankRows += bankRow.id; continue }
+            } else if (ref != null) {
+                // A receipt was scanned before this bank row arrived → it is the same purchase:
+                // give the receipt row the bank's id instead of booking the money again.
+                val receipt = openReceipts.firstOrNull { samePurchase(it, date, item.amount) }
+                if (receipt != null) {
+                    openReceipts.remove(receipt); receipt.bankRef = ref; txRepo.save(receipt); continue
+                }
+            }
             // 2) Fallback for statements without ids and for rows imported before ids were stored.
             val k = key(TxRules.parseDate(item.date), item.amount, item.description)
             val left = already[k] ?: 0
             if (left > 0) { already[k] = left - 1; continue }
             val isExpense = item.amount.signum() < 0
-            val category = if (isExpense) myShops[budgetService.shopKey(item.description)] ?: TxRules.categorize(item.description) else null
+            val hint = item.category?.let { c -> ExpenseCategory.values().firstOrNull { it.name == c } }
+            val category = if (isExpense) hint ?: myShops[budgetService.shopKey(item.description)] ?: TxRules.categorize(item.description) else null
             saved += txRepo.save(
                 TransactionEntity(
                     user = user,
@@ -314,3 +337,6 @@ class TransactionService(
         return out.sortedByDescending { it.amount }
     }
 }
+
+/** bank_ref prefix for rows that came from a scanned receipt; replaced by the bank id once the bank row arrives. */
+private const val RECEIPT = "RECEIPT:"
