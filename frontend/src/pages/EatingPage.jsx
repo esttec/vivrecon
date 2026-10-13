@@ -185,7 +185,7 @@ export default function EatingPage() {
     try {
       const image = await shrinkImage(file)
       const r = await apiFetch('/api/ai/receipt', { method: 'POST', body: JSON.stringify({ image, mimeType: 'image/jpeg' }) })
-      const items = (r?.items || []).map(l => ({ name: l.name, qty: '', price: Number(l.price).toFixed(2), per: 1 }))
+      const items = (Array.isArray(r) ? r : Array.isArray(r?.items) ? r.items : []).map(l => ({ name: l.name, qty: '', price: Number(l.price).toFixed(2), per: 1 }))
       if (!items.length) { setError(tr('eating.scanFailed')); return }
       // Book the purchase as food spending. If the bank import brings the same payment later
       // (or brought it already), the server recognises it and counts it only once.
