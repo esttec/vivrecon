@@ -20,6 +20,7 @@ import CategoriesPage from './pages/CategoriesPage'
 import AccountsPage from './pages/AccountsPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import ChildrenPage from './pages/ChildrenPage'
+import InvestmentsPage from './pages/InvestmentsPage'
 import TermsPage from './pages/TermsPage'
 import CookieConsent from './components/CookieConsent'
 import './index.css'
@@ -53,6 +54,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/accounts"  element={<PrivateRoute><AccountsPage /></PrivateRoute>} />
         <Route path="/subscriptions" element={<PrivateRoute><SubscriptionsPage /></PrivateRoute>} />
         <Route path="/children" element={<PrivateRoute><ChildrenPage /></PrivateRoute>} />
+        <Route path="/investments" element={<PrivateRoute><InvestmentsPage /></PrivateRoute>} />
         <Route path="*"         element={<Navigate to="/budget" replace />} />
       </Routes>
       <CookieConsent />

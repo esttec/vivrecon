@@ -92,10 +92,11 @@ export default function SavingsPage() {
             <span style={s.acctLabel}>{tr('savings.balance')}</span>
             <span style={s.acctValue}>{fmt(savingsBalance)}</span>
           </div>
-          <div style={s.acctCol}>
-            <span style={s.acctLabel}>{tr('savings.invested')}</span>
+          <a href="/investments" style={{ ...s.acctCol, textDecoration: 'none', cursor: 'pointer' }}>
+            <span style={s.acctLabel}>{tr('savings.invested')} ›</span>
             <span style={{ ...s.acctValue, color: '#2a4d8f' }}>{fmt(invested)}</span>
-          </div>
+            <span style={{ fontSize: 11, color: '#2a4d8f', fontWeight: 600 }}>{tr('inv.openJournal')}</span>
+          </a>
           <div style={s.acctCol}>
             <span style={s.acctLabel}>{tr('savings.available')}</span>
             <span style={{ ...s.acctValue, color: '#1e6b3a' }}>{fmt(savingsBalance + Number(invested))}</span>
