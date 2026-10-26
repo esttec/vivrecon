@@ -4,20 +4,8 @@ import { useUser } from '../context/UserContext'
 import { t } from '../theme'
 import { useT, LANGUAGES } from '../i18n'
 import Ico from './Icon'
+import { flatNav } from './navLinks'
 
-const NAV_LINKS = [
-  { key: 'nav.budget',   path: '/budget',   icon: '💰' },
-  { key: 'nav.house',    path: '/house',    icon: '🏠' },
-  { key: 'nav.eating',   path: '/eating',   icon: '🥗' },
-  { key: 'nav.children', path: '/children', icon: '🧒' },
-  { key: 'nav.clothing', path: '/clothing', icon: '👗' },
-  { key: 'nav.travel',   path: '/travel',   icon: '✈️' },
-  { key: 'nav.debts',    path: '/debts',    icon: '💳' },
-  { key: 'nav.savings',  path: '/savings',  icon: '🐷' },
-  { key: 'nav.accounts', path: '/accounts', icon: '🏦' },
-  { key: 'nav.subs',     path: '/subscriptions', icon: '🔁' },
-  { key: 'nav.profile',  path: '/profile',  icon: '👤' },
-]
 
 export default function MobileMenu() {
   const [open, setOpen] = useState(false)
@@ -63,10 +51,10 @@ export default function MobileMenu() {
         </div>
 
         <nav style={s.nav}>
-          {NAV_LINKS.map(link => {
+          {flatNav().map(link => {
             const active = pathname === link.path
             return (
-              <button key={link.path} style={{ ...s.link, ...(active ? s.linkActive : {}) }} onClick={() => go(link.path)}>
+              <button key={link.path} style={{ ...s.link, ...(link.sub ? s.sub : {}), ...(active ? s.linkActive : {}) }} onClick={() => go(link.path)}>
                 <span style={s.icon}><Ico e={link.icon} size={18} /></span>{tr(link.key)}
               </button>
             )
@@ -112,6 +100,7 @@ const s = {
   close:    { border: 'none', background: 'transparent', cursor: 'pointer', padding: 4, display: 'flex' },
   nav:      { flex: 1, padding: '4px 12px', display: 'flex', flexDirection: 'column', gap: 2 },
   link:     { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px', borderRadius: 9, border: 'none', background: 'transparent', color: '#a8b8d8', fontSize: 15, fontWeight: 500, cursor: 'pointer', textAlign: 'left', width: '100%' },
+  sub:      { paddingLeft: 32, paddingTop: 9, paddingBottom: 9, fontSize: 14 },
   linkActive:{ background: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600 },
   icon:     { width: 24, textAlign: 'center', flexShrink: 0 },
   bottom:   { padding: '12px 14px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' },

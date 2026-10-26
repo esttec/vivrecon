@@ -3,20 +3,8 @@ import { useUser } from '../context/UserContext'
 import { t } from '../theme'
 import { useT, LANGUAGES } from '../i18n'
 import Ico from './Icon'
+import { flatNav } from './navLinks'
 
-const NAV_LINKS = [
-  { key: 'nav.budget',   path: '/budget',   icon: '💰' },
-  { key: 'nav.house',    path: '/house',    icon: '🏠' },
-  { key: 'nav.eating',   path: '/eating',   icon: '🥗' },
-  { key: 'nav.children', path: '/children', icon: '🧒' },
-  { key: 'nav.clothing', path: '/clothing', icon: '👗' },
-  { key: 'nav.travel',   path: '/travel',   icon: '✈️' },
-  { key: 'nav.debts',    path: '/debts',    icon: '💳' },
-  { key: 'nav.savings',  path: '/savings',  icon: '🐷' },
-  { key: 'nav.accounts', path: '/accounts', icon: '🏦' },
-  { key: 'nav.subs',     path: '/subscriptions', icon: '🔁' },
-  { key: 'nav.profile',  path: '/profile',  icon: '👤' },
-]
 
 export default function AppSidebar() {
   const navigate     = useNavigate()
@@ -42,12 +30,12 @@ export default function AppSidebar() {
       </div>
 
       <nav style={s.nav}>
-        {NAV_LINKS.map(link => {
+        {flatNav().map(link => {
           const active = pathname === link.path
           return (
             <button
               key={link.path}
-              style={{ ...s.link, ...(active ? s.linkActive : {}) }}
+              style={{ ...s.link, ...(link.sub ? s.sub : {}), ...(active ? s.linkActive : {}) }}
               onClick={() => navigate(link.path)}
             >
               <span style={s.icon}><Ico e={link.icon} size={17} /></span>
@@ -107,6 +95,7 @@ const s = {
   logo:     { fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', cursor: 'pointer' },
   nav:      { flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 },
   link:     { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: 'none', background: 'transparent', color: '#a8b8d8', fontSize: 14, fontWeight: 500, cursor: 'pointer', textAlign: 'left', width: '100%' },
+  sub:      { paddingLeft: 30, fontSize: 13 },
   linkActive:{ background: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600 },
   icon:     { fontSize: 16, width: 22, textAlign: 'center', flexShrink: 0 },
   bottom:   { padding: '12px 14px 22px', borderTop: '1px solid rgba(255,255,255,0.08)' },
