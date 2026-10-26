@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 // Single source for the sidebar and mobile menu. `children` render indented under their parent.
 export const NAV_LINKS = [
   { key: 'nav.budget', path: '/budget', icon: '💰', children: [
@@ -15,5 +17,12 @@ export const NAV_LINKS = [
   { key: 'inv.title',    path: '/investments', icon: '📈' },
 ]
 
-// Parents followed by their children, each flagged with `sub`.
-export const flatNav = () => NAV_LINKS.flatMap(l => [l, ...(l.children || []).map(c => ({ ...c, sub: true }))])
+// Parents followed by their children (flagged `sub`); children are left out while collapsed.
+export const flatNav = (open = true) => NAV_LINKS.flatMap(l => [l, ...(open && l.children || []).map(c => ({ ...c, sub: true }))])
+
+// Open/closed state of the subcategory group, remembered per browser.
+export function useSubOpen() {
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem('navSubOpen') !== '0' } catch { return true } })
+  const toggle = () => setOpen(o => { try { localStorage.setItem('navSubOpen', o ? '0' : '1') } catch {} return !o })
+  return [open, toggle]
+}
