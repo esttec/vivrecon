@@ -22,6 +22,10 @@ export default function BudgetLinesCard({ category, yearMonth, planned, plannedP
       .then(b => {
         setLines((b?.expenseLines || []).filter(l => l.category === category))
         setIncome(Number(b?.totalIncome || 0))
+        // No salary this month: the base is what earlier months left over (the money actually on the account).
+        if (!Number(b?.totalIncome)) apiFetch('/api/budget').then(all => setIncome(Math.max(0, (all || [])
+          .filter(x => x.yearMonth < ym)
+          .reduce((s, x) => s + Number(x.totalIncome ?? 0) - Number(x.totalExpenses ?? 0), 0)))).catch(() => {})
         const pl = (b?.planLines || []).filter(l => l.category === category)
         setPlan(pl.length ? pl.reduce((s, l) => s + Number(l.amount), 0) : null)
       })
