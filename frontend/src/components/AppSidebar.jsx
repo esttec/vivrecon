@@ -33,17 +33,17 @@ export default function AppSidebar() {
       <nav style={s.nav}>
         {flatNav(subOpen).map(link => {
           const active = pathname === link.path
-          const btn = (
+          return (
             <button
               key={link.path}
               style={{ ...s.link, ...(link.sub ? s.sub : {}), ...(active ? s.linkActive : {}) }}
-              onClick={() => navigate(link.path)}
+              onClick={() => { navigate(link.path); if (link.children) toggleSub() }}
+              aria-expanded={link.children ? subOpen : undefined}
             >
               <span style={s.icon}><Ico e={link.icon} size={17} /></span>
               {tr(link.key)}
             </button>
           )
-          return link.children ? <div key={link.path} style={s.row}>{btn}<button style={s.chev} onClick={toggleSub} aria-expanded={subOpen} aria-label={tr(link.key)}>{subOpen ? '▾' : '▸'}</button></div> : btn
         })}
       </nav>
 
@@ -97,8 +97,6 @@ const s = {
   logo:     { fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', cursor: 'pointer' },
   nav:      { flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 },
   link:     { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: 'none', background: 'transparent', color: '#a8b8d8', fontSize: 14, fontWeight: 500, cursor: 'pointer', textAlign: 'left', width: '100%' },
-  row:      { display: 'flex', alignItems: 'center' },
-  chev:     { border: 'none', background: 'transparent', color: '#a8b8d8', fontSize: 14, cursor: 'pointer', padding: '8px 12px', borderRadius: 9 },
   sub:      { paddingLeft: 30, fontSize: 13 },
   linkActive:{ background: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600 },
   icon:     { fontSize: 16, width: 22, textAlign: 'center', flexShrink: 0 },
