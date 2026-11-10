@@ -47,10 +47,12 @@ function parseCsv(text) {
   const looksHeader = header.some(h =>
     /date|päev|aeg|amount|summa|sum|selgitus|description|saaja|payee|details|narrative|deebet|kreedit|debit|credit/.test(h))
 
-  let refIdx = -1, detIdx = -1, dateIdx = -1, descIdx = -1, amtIdx = -1, debIdx = -1, creIdx = -1, dcIdx = -1
+  let refIdx = -1, detIdx = -1, acctIdx = -1, dateIdx = -1, descIdx = -1, amtIdx = -1, debIdx = -1, creIdx = -1, dcIdx = -1
   if (looksHeader) {
     header.forEach((h, i) => {
       if (dateIdx < 0 && /date|päev|aeg|data/.test(h)) dateIdx = i
+      // The other party's IBAN ("Saaja/maksja konto"): filled in only for bank transfers, empty for card payments.
+      if (acctIdx < 0 && /(saaja|maksja|payee|beneficiary|counterparty).*(konto|account|iban)/.test(h)) acctIdx = i
       // skip IBAN/bank-code columns like "Saaja/maksja konto" (LHV, SEB)
       if (descIdx < 0 && !/konto|account|kood|code/.test(h) && /selgitus|description|saaja|payee|details|narrative|merchant|nimi|reference|beneficiary/.test(h)) descIdx = i
       // Swedbank/SEB/LHV: unsigned Summa + a "Deebet/Kreedit (D/C)" column holding D or K/C
@@ -98,6 +100,9 @@ function parseCsv(text) {
 
     let desc = descIdx >= 0 ? cols[descIdx] : ''
     if (!desc && detIdx >= 0) desc = cols[detIdx] // e.g. cash deposits have no payee name
+    // A transfer keeps what it was for ("Nouvest OÜ – üür" / "Nouvest OÜ – tagastus"), so payments to
+    // one company for different things stay separate lines and can sit in different categories.
+    else if (desc && acctIdx >= 0 && cols[acctIdx] && detIdx >= 0 && cols[detIdx] && cols[detIdx] !== desc) desc += ' – ' + cols[detIdx]
     if (!desc) {
       desc = cols.filter(c => c && !isDate(c) && parseAmount(c) === null)
         .sort((a, b) => b.length - a.length)[0] || ''
