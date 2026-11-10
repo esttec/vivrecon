@@ -1,0 +1,168 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Lora;src:url(file:///usr/share/fonts/truetype/google-fonts/Lora-Variable.ttf)}
+@font-face{font-family:Inter;src:url(file:///usr/share/fonts/opentype/inter/Inter-Regular.otf);font-weight:400}
+@font-face{font-family:Inter;src:url(file:///usr/share/fonts/opentype/inter/Inter-SemiBold.otf);font-weight:600}
+@font-face{font-family:Inter;src:url(file:///usr/share/fonts/opentype/inter/Inter-Bold.otf);font-weight:700}
+@font-face{font-family:Inter;src:url(file:///usr/share/fonts/opentype/inter/Inter-ExtraBold.otf);font-weight:800}
+*{box-sizing:border-box;margin:0}
+body{width:1080px;height:1920px;overflow:hidden;background:#f2f0e9;font-family:Inter;color:#1f2a44}
+.scene{position:absolute;inset:0;opacity:0}
+h1{position:absolute;left:90px;right:90px;top:330px;font-family:Lora;font-weight:600;font-size:112px;line-height:1.05;letter-spacing:-2px;color:#2c3344}
+h1 .hl{background:linear-gradient(#ffd84d,#ffd84d) no-repeat left/0% 100%;padding:0 12px}
+.card{position:absolute;left:70px;right:70px;background:#fff;border-radius:36px;box-shadow:0 30px 80px rgba(30,40,70,.13);padding:44px}
+.logo{font-weight:800;font-size:64px;letter-spacing:-1px}.logo b{color:#4f6fe0;font-weight:800}
+/* spreadsheet */
+.sheet{position:absolute;left:40px;right:40px;top:780px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.12);overflow:hidden;font-size:30px}
+.bar{background:#eceae4;padding:16px 24px;color:#3a7d44;font-weight:600;display:flex;gap:12px;align-items:center}
+.row{display:grid;grid-template-columns:150px 330px 230px 1fr;border-bottom:1px solid #e3e3e3}
+.row div{padding:14px 16px;border-right:1px solid #e3e3e3;white-space:nowrap;overflow:hidden}
+.y{background:#ffe866}.o{background:#f6b04b}.r{background:#f7c5c5;color:#b02020;font-weight:700}.g{background:#7cc36b}
+.tag{position:absolute;background:#e5534b;color:#fff;font-weight:700;padding:12px 22px;border-radius:12px;font-size:34px;box-shadow:0 8px 20px rgba(229,83,75,.4)}
+/* app */
+.kpi{display:flex;gap:24px;margin-top:28px}.kpi>div{flex:1;background:#f6f7fb;border-radius:24px;padding:26px}
+.lbl{font-size:26px;color:#7a8299;font-weight:600}.big{font-size:64px;font-weight:800;margin-top:6px}
+.cat{margin-top:30px}.cat .top{display:flex;justify-content:space-between;font-size:32px;font-weight:600}
+.track{height:22px;background:#eef0f6;border-radius:11px;margin-top:12px;overflow:hidden}.fill{height:100%;border-radius:11px}
+.shop{display:flex;align-items:center;gap:24px;padding:26px 0;border-bottom:1px solid #eef0f4;font-size:34px}
+.note{display:flex;align-items:center;gap:22px;background:#fff;border-radius:26px;padding:14px 28px;margin-bottom:10px;box-shadow:0 10px 30px rgba(30,40,70,.10);font-size:32px}
+.ico{width:76px;height:76px;border-radius:20px;display:grid;place-items:center;font-size:38px;flex-shrink:0}
+.amt{margin-left:auto;font-weight:700}
+.pill{font-size:24px;font-weight:700;padding:6px 16px;border-radius:20px;margin-left:12px}
+.blk{border-radius:28px;display:flex;align-items:center;padding:0 40px;color:#1b2033;margin-top:18px;overflow:hidden;transform-origin:left center}
+.blk .p{font-size:76px;font-weight:800;width:200px}.blk .n{font-size:40px;font-weight:700}.blk .s{font-size:28px;font-weight:600;opacity:.75}.blk .a{margin-left:auto;font-size:60px;font-weight:800}
+.btn{display:inline-flex;align-items:center;gap:20px;background:#1f2433;color:#fff;font-size:44px;font-weight:600;padding:30px 30px 30px 54px;border-radius:70px}
+.btn i{width:84px;height:84px;border-radius:50%;background:#ffd84d;color:#1f2433;display:grid;place-items:center;font-style:normal;font-size:44px}
+#tiles{position:absolute;inset:0;z-index:8;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(21,1fr);pointer-events:none}
+#tiles div{background:#ffd84d;border-radius:6px;margin:2px;opacity:0}
+#cursor{position:absolute;width:64px;height:64px;z-index:9;opacity:0}
+</style></head><body>
+
+<!-- 0 intro -->
+<div class="scene" id="s0">
+  <div style="position:absolute;left:90px;top:200px" class="logo">viv<b>recon</b></div>
+  <h1 style="top:700px;font-size:110px">Путь к финансовому <span class="hl">благополучию</span></h1>
+</div>
+
+<!-- 1 money gone before month end -->
+<div class="scene" id="s1">
+  <div style="position:absolute;left:90px;top:200px" class="logo">viv<b>recon</b></div>
+  <h1 style="top:300px;font-size:96px">Зарплата пришла…<br><span class="hl">и уже нет?</span></h1>
+  <div class="card" id="bal" style="top:640px;padding:34px 44px;display:flex;align-items:center;justify-content:space-between">
+    <div><div class="lbl">Баланс счёта</div><div class="big" id="balv" style="font-size:96px">865,31 €</div></div>
+    <div id="warn" class="pill" style="background:#fde4e2;color:#c0392b;font-size:30px;padding:12px 22px;opacity:0">⚠ Денег нет</div>
+  </div>
+  <div id="notes" style="position:absolute;left:70px;right:70px;top:930px"></div>
+  <div id="why" style="position:absolute;left:0;right:0;top:1720px;text-align:center;font-family:Lora;font-size:64px;font-weight:600;color:#2c3344;opacity:0">Куда всё ушло? 🤯</div>
+</div>
+
+<!-- 2 app overview -->
+<div class="scene" id="s2">
+  <h1 style="top:250px;font-size:92px">Веди учёт<br>своих трат с<br><span class="logo" style="font-size:104px;font-family:Inter">viv<b>recon</b></span></h1>
+  <div class="card" id="c2" style="top:700px">
+    <div class="lbl">Бюджет · сентябрь</div>
+    <div class="kpi"><div><div class="lbl">Доход</div><div class="big" style="color:#1e8a4c">865 €</div></div>
+      <div><div class="lbl">Потрачено</div><div class="big" id="spent">0 €</div></div></div>
+    <div class="cat"><div class="top"><span>🍎 Еда</span><span id="v1">269 €</span></div><div class="track"><div class="fill" id="f1" style="background:#ff9f5a"></div></div></div>
+    <div class="cat"><div class="top"><span>🏠 Жильё</span><span>222 €</span></div><div class="track"><div class="fill" id="f2" style="background:#4f6fe0"></div></div></div>
+    <div class="cat"><div class="top"><span>👗 Одежда</span><span>85 €</span></div><div class="track"><div class="fill" id="f3" style="background:#d77be0"></div></div></div>
+    <div class="cat"><div class="top"><span>🚌 Транспорт</span><span>19 €</span></div><div class="track"><div class="fill" id="f4" style="background:#47b8a8"></div></div></div>
+  </div>
+</div>
+
+<!-- 3 every shop -->
+<div class="scene" id="s3">
+  <h1 style="font-size:100px">Распределяй<br><span class="hl">расходы разумно</span></h1>
+  <div class="card" style="top:720px;padding:20px 44px">
+    <div class="shop" id="r1"><div class="ico" style="background:#fff0e3">🛒</div><div>Selver<div class="lbl">17 покупок</div></div><div class="amt">260,45 €</div></div>
+    <div class="shop" id="r2"><div class="ico" style="background:#e8eefc">🏠</div><div>Kodu Üür OÜ<div class="lbl">аренда</div></div><div class="amt">161,00 €</div></div>
+    <div class="shop" id="r3"><div class="ico" style="background:#fbe9fc">👗</div><div>WEEKEND<div class="lbl">одежда</div></div><div class="amt">167,99 €</div></div>
+    <div class="shop" id="r4" style="background:#e9f8ef;margin:0 -44px;padding:26px 44px;border:none"><div class="ico" style="background:#c9efd7">↩︎</div><div>Возврат: WEEKEND<div class="lbl" style="color:#1e8a4c">учтён автоматически ✓</div></div><div class="amt" style="color:#1e8a4c">−167,99 €</div></div>
+  </div>
+</div>
+
+<!-- 4 plan -->
+<div class="scene" id="s4">
+  <h1 style="top:280px">План<br><span class="hl">в одно касание</span></h1>
+  <div style="position:absolute;left:0;right:0;top:640px;text-align:center"><div class="btn" id="b4" style="padding:30px 54px">⚡ 50 / 30 / 20</div></div>
+  <div style="position:absolute;left:70px;right:70px;top:860px">
+    <div class="blk" id="k1" style="height:400px;background:#8aa6ff"><div class="p">50%</div><div><div class="n">Нужды</div><div class="s">аренда + еда</div></div><div class="a">433 €</div></div>
+    <div class="blk" id="k2" style="height:250px;background:#ffbe7a"><div class="p">30%</div><div><div class="n">Желания</div><div class="s">для себя</div></div><div class="a">260 €</div></div>
+    <div class="blk" id="k3" style="height:190px;background:#79dba0"><div class="p">20%</div><div><div class="n">Сбережения</div><div class="s">на будущее</div></div><div class="a">173 €</div></div>
+  </div>
+</div>
+
+<!-- 5 savings -->
+<div class="scene" id="s5">
+  <h1 style="font-size:92px">Даже с мин. зарплатой<br><span class="hl">ты копишь</span></h1>
+  <div class="card" style="top:780px">
+    <div class="lbl">Уровень сбережений 1</div>
+    <div style="display:flex;align-items:baseline;gap:16px;margin-top:10px"><div class="big" id="sv" style="font-size:110px;color:#1e8a4c">0 €</div><div class="lbl" style="font-size:36px">/ 1000 €</div></div>
+    <div class="track" style="height:40px;border-radius:20px;margin-top:30px"><div class="fill" id="sf" style="background:linear-gradient(90deg,#79dba0,#1e8a4c);border-radius:20px"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:22px" class="lbl"><span id="mo">месяц 0</span><span>173 € в месяц</span></div>
+    <div id="done" style="margin-top:34px;font-size:40px;font-weight:700;color:#1e8a4c;opacity:0">🎉 Цель достигнута за 6 месяцев</div>
+  </div>
+</div>
+
+<!-- 6 end -->
+<div class="scene" id="s6">
+  <div style="position:absolute;left:0;right:0;top:760px;text-align:center"><div class="logo" style="font-size:150px">viv<b>recon</b></div>
+    <div style="font-size:44px;color:#2c3344;margin:24px 80px 0;font-weight:700;line-height:1.25">Здесь мы идём к финансовой независимости</div><div style="font-size:36px;color:#6b7390;margin:18px 100px 0;font-weight:600;line-height:1.3">Здесь ты увидишь реальные цифры — как сэкономить</div>
+    <div class="btn" id="b6" style="margin-top:60px">Начни бесплатно <i>→</i></div>
+    <div style="font-size:40px;font-weight:700;margin-top:60px;color:#4f6fe0">vivrecon.com</div></div>
+</div>
+
+<div id="tiles"></div>
+<svg id="cursor" viewBox="0 0 24 24"><path d="M9 2v11.5l-2.2-2.1a1.6 1.6 0 0 0-2.3 2.3L9.5 19c1 1 2.2 1.5 3.6 1.5H15a5 5 0 0 0 5-5v-4.5a1.5 1.5 0 0 0-3 0V10a1.5 1.5 0 0 0-3 0v-.5a1.5 1.5 0 0 0-3 0V2a1.5 1.5 0 0 0-2 0z" fill="#fff" stroke="#111" stroke-width="1.3"/></svg>
+
+<script>
+const $=id=>document.getElementById(id)
+const cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x))
+const ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)}
+const back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)}
+const seg=(t,a,b)=>cl((t-a)/(b-a))
+// scene windows [start,end]
+const S={s0:[0,1.5],s1:[1.5,6.75],s2:[6.75,9.75],s3:[9.75,12.75],s4:[12.75,16.5],s5:[16.5,20.25],s6:[20.25,24]}
+const euro=v=>Math.round(v).toLocaleString('ru-RU')+' €'
+function vis(id,t){const [a,b]=S[id];const i=a===0?1:seg(t,a,a+.01),o=b===24?1:1-seg(t,b-.01,b);const v=Math.min(i,o);$(id).style.opacity=v;return t-a}
+function slide(el,p,dy=80){el.style.opacity=ease(p);el.style.transform=`translateY(${(1-ease(p))*dy}px)`}
+function cursor(x,y,show,press){const c=$('cursor');c.style.opacity=show;c.style.left=x+'px';c.style.top=y+'px';c.style.transform=`scale(${press?0.85:1})`}
+// yellow tile wipe around every scene change
+const TILES=[...Array(12*21)].map((_,i)=>{const d=document.createElement('div');document.getElementById('tiles').appendChild(d);return {el:d,r:((i*7919)%997)/997}})
+function tiles(t){
+  const cuts=Object.values(S).map(w=>w[0]).filter(x=>x>0)
+  const b=cuts.reduce((p,c)=>Math.abs(c-t)<Math.abs(p-t)?c:p,99)
+  TILES.forEach(({el,r})=>{const on=b-.38+r*.28, off=b+.04+r*.3
+    const v=t>=on&&t<off?1:0; el.style.opacity=v; el.style.transform=`scale(${v?1:.3})`})
+}
+function marker(t){document.querySelectorAll('.scene').forEach(sc=>{const w=S[sc.id];if(!w)return
+  const p=ease(seg(t,w[0]+.35,w[0]+.75));sc.querySelectorAll('.hl').forEach(h=>h.style.backgroundSize=(p*100)+'% 100%')})}
+window.render=function(t){
+  tiles(t); marker(t)
+  let l
+  vis('s0',t)
+  l=vis('s1',t)
+  const NOTES=[['🛒','Selver',39.16],['👗','Weekend',167.99],['🏠','Kodu Üür OÜ',161,'Перевод'],['🛋️','Jysk',93.99],['🛒','Selver',31.42],['💊','Аптека',14.2],['💳','+ ещё 19 платежей',345.15]]
+  if(!$('notes').children.length) $('notes').innerHTML=NOTES.map(([i,n,a,k='Оплата картой'])=>`<div class="note"><div class="ico" style="width:64px;height:64px;font-size:32px;background:#f3f4f8">${i}</div><div><div class="lbl" style="font-size:22px">${k}</div>${n}</div><div class="amt" style="color:#c0392b">−${a.toFixed(2).replace('.',',')} €</div></div>`).join('')
+  let bal=865.31; [...$('notes').children].forEach((el,i)=>{const p=seg(l,.4+i*.38,.65+i*.38);el.style.opacity=ease(p);el.style.transform=`translateX(${(1-ease(p))*-120}px)`;if(p>=1)bal-=NOTES[i][2]})
+  $('balv').textContent=bal.toFixed(2).replace('.',',')+' €'; $('balv').style.color=bal<100?'#c0392b':'#1f2a44'
+  $('warn').style.opacity=bal<100?1:0; $('warn').style.transform=`scale(${back(seg(l,3.3,3.6))})`
+  $('bal').style.transform=bal<100?`translateX(${Math.sin(l*60)*6*(1-seg(l,3.3,3.7))}px)`:'none'
+  $('why').style.opacity=ease(seg(l,3.6,4))
+  l=vis('s2',t); slide($('c2'),seg(l,.2,.8),160)
+  $('spent').textContent=euro(609.58*ease(seg(l,.3,1.4))+(l>2.2?12.83:0)); $('spent').style.color=l>2.2&&l<2.6?'#c0392b':'#1f2a44'
+  ;[['f1',269/300],['f2',222/300],['f3',85/300],['f4',19/300]].forEach(([id,w],i)=>$(id).style.width=(w*100*ease(seg(l,.4+i*.18,1.2+i*.18)))+'%')
+  l=vis('s3',t); ['r1','r2','r3'].forEach((id,i)=>slide($(id),seg(l,.2+i*.25,.5+i*.25),60))
+  slide($('r4'),seg(l,1.3,1.7),60); $('r3').style.textDecoration=l>1.8?'line-through':'none'; $('r3').style.opacity*=l>1.8?.5:1
+  l=vis('s4',t); const click=l>.8&&l<1.0
+  $('b4').style.transform=`scale(${click?.94:1})`
+  if(t<S.s4[1]) cursor(620,720,l>.3&&l<1.8?1:0,click)
+  ;['k1','k2','k3'].forEach((id,i)=>{const p=seg(l,1.05+i*.22,1.5+i*.22);$(id).style.transform=`scaleX(${back(p)})`;$(id).style.opacity=p>0?1:0})
+  l=vis('s5',t); const m=Math.min(6,Math.floor(seg(l,.3,2.4)*6.999)); const sv=m*173
+  $('sv').textContent=euro(sv); $('sf').style.width=Math.min(100,sv/10)+'%'; $('mo').textContent='месяц '+m
+  $('done').style.opacity=ease(seg(l,2.5,2.9))
+  l=vis('s6',t); const p6=seg(l,.4,.9); $('b6').style.transform=`scale(${back(p6)})`
+  if(t>=S.s6[0]) cursor(700,1300,l>1.2?1:0,l>1.9&&l<2.1)
+}
+render(0)
+</script></body></html>
