@@ -248,7 +248,12 @@ export default function BudgetPage() {
   const totalExpenses = budget ? Number(budget.totalExpenses) : 0
   const balance       = totalIncome - totalExpenses
   const available     = balance + carry
-  const spentPct      = totalIncome > 0 ? Math.min(Math.round(totalExpenses / totalIncome * 100), 100) : 0
+  // Money put into savings or paid off a debt leaves the account (so it lowers the balance),
+  // but it is not spending: the Expenses figure shows what was actually consumed.
+  const setAside      = (budget?.expenseLines ?? []).filter(l => l.category === 'SAVINGS' || l.category === 'DEBTS')
+    .reduce((sum, l) => sum + Number(l.amount), 0)
+  const spending      = totalExpenses - setAside
+  const spentPct      = totalIncome > 0 ? Math.min(Math.round(spending / totalIncome * 100), 100) : 0
 
   // Planned amounts from profile (reference only)
   const savingsPct = Number(profile?.savingsTargetPercent ?? 0)
@@ -347,7 +352,9 @@ export default function BudgetPage() {
                 {/* ── Summary cards ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
                   <SummaryCard label={tr('budget.income')}   value={fmt(totalIncome || null)}  sub={`${(budget.incomeLines ?? []).length} ${tr('budget.sources')}`} bg={badge.green} />
-                  <SummaryCard label={tr('budget.expenses')} value={fmt(totalExpenses)}        sub={totalIncome > 0 ? tr('budget.pctOfIncome', { pct: spentPct }) : null} bg={badge.red}  />
+                  <SummaryCard label={tr('budget.expenses')} value={fmt(spending)}
+                    sub={[totalIncome > 0 ? tr('budget.pctOfIncome', { pct: spentPct }) : null,
+                      setAside ? `+ ${fmt(setAside)} ${tr('cat.savings')} / ${tr('cat.debts')}` : null].filter(Boolean).join(' · ') || null} bg={badge.red}  />
                   <SummaryCard label={tr('budget.balance')}  value={fmt(available)}
                     sub={carry ? tr('budget.carried', { amount: fmt(carry) }) : (totalIncome > 0 ? (balance >= 0 ? tr('budget.onTrack') : tr('budget.overBudget')) : null)}
                     bg={available >= 0 ? badge.blue : badge.red} fullWidth={isMobile} />
@@ -576,7 +583,7 @@ export default function BudgetPage() {
                   {(budget.expenseLines ?? []).length > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, marginTop: 6, borderTop: `2px solid ${t.border}` }}>
                       <span style={{ fontSize: 13, fontWeight: 600, color: t.navyLight }}>{tr('budget.totalExpenses')}</span>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#9b2020' }}>{fmt(totalExpenses)}</span>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#9b2020' }}>{fmt(spending)}</span>
                     </div>
                   )}
 
