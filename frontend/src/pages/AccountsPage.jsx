@@ -219,7 +219,7 @@ export default function AccountsPage() {
                   <span>{tr('accounts.recent')}</span>
                   <span style={{ color: '#c0392b' }}>{tr('accounts.spentThisMonth')}: {fmt(spentThisMonth)}</span>
                 </div>
-                {txs.slice(0, 50).map((x, i) => (
+                {txs.filter(x => x.date.startsWith(month)).map((x, i) => (
                   <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13, padding: '5px 0', borderTop: '1px solid #f0f0ec' }}>
                     <span style={{ color: t.navyLight, flexShrink: 0 }}>{x.date.split('-').reverse().join('.')}</span>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.description}</span>
