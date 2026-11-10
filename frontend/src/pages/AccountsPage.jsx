@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import { budgetVsBank } from '../utils/budgetVsBank'
 import PageShell from '../components/PageShell'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../context/UserContext'
@@ -58,7 +59,7 @@ export default function AccountsPage() {
     setLoading(true); setError('')
     try {
       const [accs, recent, all] = await Promise.all([
-        apiFetch('/api/accounts'), apiFetch('/api/transactions?limit=50'), apiFetch('/api/budget'),
+        apiFetch('/api/accounts'), apiFetch('/api/transactions?limit=500'), apiFetch('/api/budget'),
       ])
       setAccounts(accs || []); setTxs(recent || []); setBudgets(all || [])
     }
@@ -94,6 +95,9 @@ export default function AccountsPage() {
   // Every row counts: purchases add to spending, a paired refund takes it back off.
   const spentThisMonth = txs.filter(x => x.date.startsWith(month))
     .reduce((s, x) => Number(x.amount) < 0 ? s - Number(x.amount) : x.refunded ? s - Number(x.amount) : s, 0)
+  // shortcut: with 500 rows loaded the oldest month may be cut off, so it is left out; page the list when users pass 500 rows.
+  const firstFull = txs.length >= 500 ? txs[txs.length - 1].date.slice(0, 7) : ''
+  const mismatches = budgetVsBank(txs, budgets).filter(r => r.month > firstFull)
   const iconFor = key => (TYPES.find(x => x.key === key)?.icon ?? '💼')
 
   const typeTab = (active) => ({
@@ -152,6 +156,23 @@ export default function AccountsPage() {
               </div>
             )}
 
+            {txs.length > 0 && mismatches.length > 0 && (
+              <div style={s.card}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: t.navy }}>
+                  <span>{tr('accounts.check')}</span><span>{fmt(mismatches.reduce((a, r) => a + r.diff, 0))}</span>
+                </div>
+                <div style={s.hint}>{tr('accounts.checkHint')}</div>
+                {mismatches.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13, padding: '5px 0', borderTop: '1px solid #f0f0ec' }}>
+                    <span style={{ color: t.navyLight, flexShrink: 0 }}>{r.month}</span>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</span>
+                    <span style={{ color: t.navyLight, flexShrink: 0 }}>{tr('accounts.checkBank')} {fmt(r.bank)} · {tr('accounts.checkBudget')} {fmt(r.budget)}</span>
+                    <span style={{ fontWeight: 700, flexShrink: 0, color: r.diff < 0 ? '#c0392b' : '#1e6b3a' }}>{fmt(r.diff)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <form onSubmit={addAccount} style={s.card}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                 {TYPES.map(tp => (
@@ -198,7 +219,7 @@ export default function AccountsPage() {
                   <span>{tr('accounts.recent')}</span>
                   <span style={{ color: '#c0392b' }}>{tr('accounts.spentThisMonth')}: {fmt(spentThisMonth)}</span>
                 </div>
-                {txs.map((x, i) => (
+                {txs.slice(0, 50).map((x, i) => (
                   <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13, padding: '5px 0', borderTop: '1px solid #f0f0ec' }}>
                     <span style={{ color: t.navyLight, flexShrink: 0 }}>{x.date.split('-').reverse().join('.')}</span>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.description}</span>

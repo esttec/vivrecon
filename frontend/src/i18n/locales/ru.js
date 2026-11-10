@@ -377,6 +377,7 @@ export default {
   "accounts.outThisMonth": "Потрачено в этом месяце",
   "accounts.onAccount": "Сейчас на счёте",
   "accounts.recent": "Последние транзакции",
+  "accounts.check": "Бюджет и строки банка", "accounts.checkHint": "Строки, которые отличаются от импортированных из банка: добавлены или изменены вручную либо отсутствуют. В сумме это разница с банковским счётом.", "accounts.checkBank": "банк", "accounts.checkBudget": "бюджет",
   "accounts.spentThisMonth": "Потрачено в этом месяце",
   "budget.setRealBalance": "Указать реальный остаток на счёте",
   "budget.realBalancePrompt": "Сколько денег сегодня на вашем счёте?",

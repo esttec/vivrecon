@@ -238,6 +238,7 @@ export default {
   'accounts.onAccount': 'Money on account now',
   'accounts.recent': 'Latest transactions',
   'accounts.spentThisMonth': 'Spent this month',
+  'accounts.check': 'Budget vs bank rows', 'accounts.checkHint': 'Lines that differ from your imported bank rows: added or changed by hand, or missing. Together they are the gap to your bank balance.', 'accounts.checkBank': 'bank', 'accounts.checkBudget': 'budget',
   'budget.setRealBalance': 'Set my real bank balance',
   'budget.realBalancePrompt': 'How much money is on your account today?',
   'savings.invested': 'Invested',

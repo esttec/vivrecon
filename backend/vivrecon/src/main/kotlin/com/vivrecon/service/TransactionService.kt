@@ -155,6 +155,9 @@ class TransactionService(
         val existing = txRepo.findAllByUserIdOrderByTxDateDesc(userId)
         val already = existing
             .groupingBy { key(it.txDate, it.amount, it.description) }.eachCount().toMutableMap()
+        // Rows saved before bank ids were stored: the only ones a row that has an id may still duplicate.
+        val alreadyNoId = existing.filter { it.bankRef == null }
+            .groupingBy { key(it.txDate, it.amount, it.description) }.eachCount().toMutableMap()
 
         val knownRefs = existing.mapNotNull { it.bankRef }.toMutableSet()
 
@@ -189,8 +192,11 @@ class TransactionService(
             }
             // 2) Fallback for statements without ids and for rows imported before ids were stored.
             val k = key(TxRules.parseDate(item.date), item.amount, item.description)
-            val left = already[k] ?: 0
-            if (left > 0) { already[k] = left - 1; continue }
+            // A row with a new bank id is a new payment even when date, amount and shop equal an older one
+            // (two identical purchases in one day), so it is only checked against the rows without ids.
+            val seen = if (ref != null && !isReceipt) alreadyNoId else already
+            val left = seen[k] ?: 0
+            if (left > 0) { seen[k] = left - 1; continue }
             val isExpense = item.amount.signum() < 0
             val hint = item.category?.let { c -> ExpenseCategory.values().firstOrNull { it.name == c } }
             val category = if (isExpense) hint ?: myShops[budgetService.shopKey(item.description)] ?: TxRules.categorize(item.description) else null
