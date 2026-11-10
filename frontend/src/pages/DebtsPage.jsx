@@ -71,7 +71,21 @@ export default function DebtsPage() {
 
   async function loadDebts() {
     setLoading(true); setError('')
-    try { setDebts(await apiFetch('/api/debts')) }
+    try {
+      const [list, budgets] = await Promise.all([apiFetch('/api/debts'), apiFetch('/api/budget').catch(() => [])])
+      // Bank payments filed under "Debt payments" with the debt's name pay it down by themselves,
+      // so an imported repayment doesn't have to be typed in again with the Pay button.
+      const key = d => String(d).replace(/\s*\(\d+\)$/, '').trim().toLowerCase()
+      const paidByBank = name => (budgets || []).flatMap(b => b.expenseLines || [])
+        .filter(l => l.category === 'DEBTS' && key(name).length >= 3 && key(l.description).length >= 3 && (key(l.description).startsWith(key(name)) || key(name).startsWith(key(l.description))))
+        .reduce((sum, l) => sum + Number(l.amount), 0)
+      setDebts((list || []).map(d => {
+        if (d.lent) return d
+        const paid = Math.min(Number(d.totalAmount), Number(d.paidAmount) + paidByBank(d.name))
+        const remaining = Number(d.totalAmount) - paid
+        return { ...d, paidAmount: paid, remaining, paidOff: remaining <= 0, overdue: d.overdue && remaining > 0 }
+      }))
+    }
     catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
